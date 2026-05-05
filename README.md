@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🔥 Permission Firewall
+# Permission Firewall
 
 ### Multi-Tenant RBAC Escalation Detection System
 
@@ -14,232 +14,187 @@
 
 </div>
 
----
+Permission Firewall intercepts access requests, validates tenant boundaries, traverses role inheritance (DFS/BFS), and blocks indirect privilege escalation with explainable denial reasons.
 
-## What is Permission Firewall?
+## Current Stack
 
-Most RBAC systems check *direct* permissions. Permission Firewall goes deeper — it traverses your entire role inheritance graph (DFS/BFS) to catch **indirect privilege escalation** before it reaches your API.
+- Backend: Node.js + Express
+- Frontend: React + Vite
+- Storage: JSON flat files (prototype-friendly)
+- Graph + Detection: Custom DFS/BFS role traversal
+- Visualization: D3.js role graph
 
-If a user's role chain leads to a sensitive permission they shouldn't have, the request is blocked — with a full explanation of the escalation path returned in the response.
+## Core Features
 
----
+- Indirect privilege escalation detection via role chain traversal
+- Strict cross-tenant isolation checks
+- Explainable ALLOW/DENY responses (with escalation path)
+- Audit logging of every decision
+- Simulator with preset scenarios and custom checks
+- Dashboard with stats, logs, and on-demand graphs
+- Role hierarchy graph by tenant
+- Login modes:
+  - Demo Login (user picker)
+  - Secure Login (email + password + JWT issuance)
 
-## Features
+## Important Auth Note
 
-| Feature | Description |
-|---|---|
-| 🛡️ Escalation Detection | DFS/BFS traversal of role inheritance graphs catches indirect permission gains before they reach your API |
-| 🏢 Tenant Isolation | Hard-blocks cross-tenant resource access regardless of role level — no exceptions |
-| 💬 Explainable Denials | Every block returns a structured reason with the full escalation path and the sensitive permission flagged |
-| 📋 Real-Time Audit Log | Persists every access attempt — allowed or denied — with user, tenant, resource, and timestamp |
-| 📊 Admin Dashboard | Live log table, stats, and a D3.js force-directed role graph with escalation paths highlighted in red |
-| 🗄️ Zero External DB | JSON flat-file store by default — swap to MongoDB without touching business logic |
+Secure login now issues JWT tokens, but protected API routes are not yet enforcing Bearer token verification.
 
----
+- Implemented: JWT generation in `POST /api/auth/login/secure`
+- Not yet enforced: token verification middleware on `/api/resources`, `/api/admin`, `/api/simulate`
 
-## How It Works
+This means secure mode is currently useful for professional login flow and session metadata, but not full API auth enforcement yet.
 
-Every request to a protected resource passes through `permissionFirewall.js`:
+## Tenants and Role Model
 
+Current seeded tenants:
+- Acme Corp (`tenant-a`)
+- Beta Inc (`tenant-b`)
+- Apex Solutions (`tenant-c`)
+
+Apex Solutions includes a deeper hierarchy for stronger demos:
+- Intern -> Analyst -> Team Lead -> Security Lead -> Admin
+
+## Project Structure
+
+```text
+firewall/
+  backend/
+    data/
+      tenants.json
+      roles.json
+      role_inheritance.json
+      users.json
+      audit_log.json
+    engine/
+      graphBuilder.js
+      escalationDetector.js
+    middleware/
+      permissionFirewall.js
+    routes/
+      auth.js
+      resources.js
+      admin.js
+      simulate.js
+    db.js
+    server.js
+  frontend/
+    src/
+      pages/
+      components/
+      context/
+      api.js
 ```
-Incoming Request
-      │
-      ▼
- Read X-User-ID + X-Resource-Tenant headers
-      │
-      ▼
- Validate user exists + belongs to requested tenant
-      │
-      ├── ❌ Tenant mismatch → DENY (cross-tenant blocked)
-      │
-      ▼
- Fetch user's direct role + permissions
-      │
-      ▼
- Build role inheritance graph for tenant
-      │
-      ▼
- DFS traversal → collect all inherited permissions
- (cycle detection via visited set)
-      │
-      ▼
- Inherited permission = SENSITIVE?
-      │
-      ├── ✅ No → ALLOW + write audit log
-      │
-      └── ❌ Yes → DENY + escalation path + write audit log
-```
 
-**Escalation response (DENY):**
-```json
-{
-  "status": "DENIED",
-  "reason": "Indirect escalation detected via role inheritance",
-  "escalationPath": ["Employee", "Manager", "Admin"],
-  "sensitivePermission": "delete:users"
-}
-```
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Frontend | React (Vite) |
-| Backend | Node.js + Express |
-| Database | JSON flat-file (prototype) — MongoDB-ready |
-| Graph Engine | Custom DFS/BFS (JavaScript) |
-| Visualization | D3.js — force-directed role graph |
-
----
-
-## Seed Data
-
-### Tenant A — Acme Corp
-
-| Role | Permissions | Inherits From |
-|---|---|---|
-| Employee | `read:reports` | — |
-| Manager | `read:reports`, `write:reports` | Employee |
-| Admin | `read:reports`, `write:reports`, `delete:users`, `manage:billing` | Manager |
-
-### Tenant B — Beta Inc
-
-| Role | Permissions | Inherits From |
-|---|---|---|
-| Admin | `read:reports`, `write:reports`, `delete:users` | — |
-
-### Users
-
-| User | Tenant | Role |
-|---|---|---|
-| `alice` | Acme Corp | Employee |
-| `bob` | Beta Inc | Admin |
-| `charlie` | Acme Corp | Admin |
-
----
-
-## Demo Scenarios
-
-**1. Privilege Escalation — Blocked**
-Login as `alice` (Tenant A · Employee) → request `delete:users`
-> ❌ DENIED — `Employee → Manager → Admin → delete:users (SENSITIVE)`
-
-**2. Cross-Tenant Access — Blocked**
-Login as `bob` (Tenant B · Admin) → request a Tenant A resource
-> ❌ DENIED — Tenant mismatch: `Beta Inc` cannot access `Acme Corp` resources
-
-**3. Direct Permission — Allowed**
-Login as `charlie` (Tenant A · Admin) → request `read:reports`
-> ✅ ALLOWED — Permission held directly by role
-
-**4. Audit Log**
-After all 3 scenarios → navigate to Dashboard → all requests logged with full context.
-
----
-
-## Getting Started
+## Run Locally
 
 ### Prerequisites
-- Node.js v18+
+
+- Node.js 18+
 - npm
 
-**Backend**
+### Backend
+
 ```bash
 cd backend
 npm install
 npm run dev
-# http://localhost:3000
 ```
 
-**Frontend**
+Backend runs on: `http://localhost:3001`
+
+### Frontend
+
 ```bash
 cd frontend
 npm install
 npm run dev
-# http://localhost:5173
 ```
 
-> CORS is pre-configured. No proxy setup needed.
+Frontend runs on: `http://localhost:5173`
 
----
+CORS is configured for `http://localhost:5173`.
 
-## Project Structure
+## Environment Variables (Optional but Recommended)
 
-```
-firewall/
-├── backend/
-│   ├── data/
-│   │   ├── tenants.json            # Tenant seed data
-│   │   ├── roles.json              # Roles + permissions per tenant
-│   │   ├── role_inheritance.json   # Parent → Child role edges
-│   │   ├── users.json              # Users with tenant + role assignment
-│   │   └── audit_log.json          # Persisted audit log
-│   ├── engine/
-│   │   ├── graphBuilder.js         # Builds adjacency list from role edges
-│   │   └── escalationDetector.js   # DFS/BFS traversal + escalation logic
-│   ├── middleware/
-│   │   └── permissionFirewall.js   # Express middleware — core firewall
-│   ├── routes/
-│   │   ├── auth.js                 # Login (select-user flow)
-│   │   ├── resources.js            # Protected demo resources
-│   │   ├── admin.js                # Audit logs, roles, graph data
-│   │   └── simulate.js             # Demo scenario simulator
-│   ├── db.js                       # JSON file read/write helpers
-│   └── server.js                   # Express app entry point
-└── frontend/
-    └── src/
-        ├── pages/
-        │   ├── Login.jsx           # Select tenant + user
-        │   ├── Dashboard.jsx       # Admin: logs, stats, graph
-        │   ├── Simulator.jsx       # Fire requests, see ALLOW/DENY
-        │   └── RoleManager.jsx     # View roles + inheritance
-        └── components/
-            ├── RoleGraph.jsx       # D3.js force-directed graph
-            ├── AuditTable.jsx      # Audit log table
-            ├── FirewallResult.jsx  # ALLOW ✅ / DENY ❌ card
-            └── Navbar.jsx
+Backend auth settings (for secure login):
+
+- `AUTH_PASSWORD_SALT` (default: `fw_demo_salt`)
+- `AUTH_JWT_SECRET` (default fallback exists, but set your own in real usage)
+
+Example PowerShell:
+
+```powershell
+$env:AUTH_PASSWORD_SALT="your_salt"
+$env:AUTH_JWT_SECRET="your_strong_secret"
+npm run dev
 ```
 
----
+## Auth API
 
-## API Reference
+### Demo Login
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/auth/login` | Returns user info for selected user |
-| `GET` | `/api/resources/:resourceId` | Protected resource (firewall applied) |
-| `GET` | `/api/admin/logs` | Full audit log |
-| `GET` | `/api/admin/roles` | All roles + inheritance per tenant |
-| `POST` | `/api/simulate` | Fire a simulated access request |
+- `GET /api/auth/users`
+- `POST /api/auth/login`
+  - body: `{ "userId": "user-alice" }`
 
-**Required headers for protected routes:**
-```
-X-User-ID: alice
-X-Resource-Tenant: tenant-a
-```
+### Secure Login
 
----
+- `POST /api/auth/login/secure`
+  - body: `{ "email": "user@domain", "password": "..." }`
+  - response includes `token`, `expiresIn`, and `user`
 
-## Roadmap
+## Main APIs
 
-- [ ] Swap JSON flat-file for MongoDB
-- [ ] JWT-based authentication
-- [ ] Time-bounded role assignments
-- [ ] Webhook alerts on escalation detection
-- [ ] Export audit log as CSV
+- `POST /api/simulate` - run a simulated permission decision
+- `GET /api/simulate/scenarios` - preset scenarios
+- `GET /api/admin/logs` - paginated audit log
+- `GET /api/admin/stats` - stats summary
+- `GET /api/admin/roles` - roles + tenants + inheritance
+- `GET /api/admin/graph/:tenantId` - graph data for D3
 
----
+Protected resource examples:
+- `GET /api/resources/reports` (`read:reports`)
+- `POST /api/resources/reports` (`write:reports`)
+- `DELETE /api/resources/users/:id` (`delete:users`)
+- `GET /api/resources/billing` (`manage:billing`)
+- `GET /api/resources/export` (`export:data`)
+
+Required headers for protected resource routes:
+
+- `x-user-id`
+- `x-resource-tenant-id`
+
+## Firewall Evaluation Flow
+
+1. Resolve user and direct role
+2. Enforce tenant isolation
+3. Check direct permission
+4. Build tenant role graph
+5. DFS traversal over inherited roles (cycle-safe)
+6. Detect inherited sensitive permission escalation
+7. Return ALLOW or DENY and log audit event
+
+## Simulator Behavior
+
+- User identity is locked to current login by default
+- Scenario selections can override user identity for demo cases
+- Engine pipeline is shown progressively with delayed step messages after clicking "Run Firewall Check"
+
+## Known Limitations
+
+- JWT verification middleware not yet enforced on protected APIs
+- JSON file storage is single-node prototype storage (not production scale)
+- No password reset or account lockout flow yet
+
+## Suggested Next Steps
+
+1. Add JWT verification middleware and protect all sensitive routes
+2. Move auth token to `httpOnly` cookie for stronger browser security
+3. Add role-based frontend route guards (admin-only views)
+4. Migrate storage from JSON files to a real database
 
 ## License
 
-MIT License
-
----
-
-<div align="center">
-
-Built by **Byte-Harvest** — Akash M K · Ishan Patil · Disha H · Bass
-
-</div>
+MIT
