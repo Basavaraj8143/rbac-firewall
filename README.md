@@ -10,7 +10,7 @@
 ![Frontend](https://img.shields.io/badge/frontend-React%20%2B%20Vite-61DAFB?logo=react)
 ![Graph](https://img.shields.io/badge/graph-D3.js-F9A03C?logo=d3.js)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Team](https://img.shields.io/badge/team-Byte--Harvest-blueviolet)
+![Team](https://img.shields.io/badge/team-InfiniTea-blueviolet)
 
 </div>
 
