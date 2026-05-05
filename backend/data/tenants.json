@@ -1,0 +1,4 @@
+[
+  { "id": "tenant-a", "name": "Acme Corp",  "domain": "acmecorp.io" },
+  { "id": "tenant-b", "name": "Beta Inc",   "domain": "betainc.io"  }
+]

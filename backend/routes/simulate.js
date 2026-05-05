@@ -1,0 +1,133 @@
+/**
+ * routes/simulate.js — Demo Scenario Simulator
+ *
+ * Allows the frontend to fire arbitrary permission check scenarios
+ * without needing to set complex headers. Perfect for live demos.
+ */
+
+'use strict';
+
+const express      = require('express');
+const { evaluate } = require('../engine/escalationDetector');
+const { v4: uuidv4 } = require('uuid');
+const db           = require('../db');
+const router       = express.Router();
+
+/**
+ * POST /api/simulate
+ * Body: { userId, resourceTenantId, requiredPermission, resource, action }
+ */
+router.post('/', (req, res) => {
+  const { userId, resourceTenantId, requiredPermission, resource, action } = req.body;
+
+  if (!userId || !resourceTenantId || !requiredPermission) {
+    return res.status(400).json({
+      error: 'Required fields: userId, resourceTenantId, requiredPermission'
+    });
+  }
+
+  const result = evaluate({
+    userId,
+    resourceTenantId,
+    requiredPermission,
+    resource:  resource || 'simulated-resource',
+    action:    action   || 'ACCESS'
+  });
+
+  // Write audit log for simulation
+  const users   = db.read('users');
+  const user    = users.find(u => u.id === userId);
+
+  const logEntry = {
+    id:                  uuidv4(),
+    timestamp:           new Date().toISOString(),
+    user_id:             userId,
+    user_name:           user?.name || 'Unknown',
+    user_tenant_id:      user?.tenant_id || null,
+    resource_tenant_id:  resourceTenantId,
+    resource:            resource || 'simulated-resource',
+    action:              action   || 'ACCESS',
+    required_permission: requiredPermission,
+    result:              result.decision,
+    reason:              result.reason,
+    escalation_path:     result.escalationPath,
+    details:             result.details,
+    source:              'simulator'
+  };
+
+  try { db.append('audit_log', logEntry); } catch (e) {}
+
+  res.json({
+    decision:       result.decision,
+    reason:         result.reason,
+    escalationPath: result.escalationPath,
+    details:        result.details,
+    auditId:        logEntry.id,
+    timestamp:      logEntry.timestamp
+  });
+});
+
+// GET /api/simulate/scenarios — pre-built demo scenarios
+router.get('/scenarios', (_req, res) => {
+  res.json({
+    scenarios: [
+      {
+        id:          'escalation-demo',
+        label:       '🔴 Privilege Escalation via Role Chain',
+        description: 'Employee (Alice) attempts to delete users — triggers escalation detection via Employee→Manager→Admin chain',
+        userId:             'user-alice',
+        resourceTenantId:   'tenant-a',
+        requiredPermission: 'delete:users',
+        resource:           'users-directory',
+        action:             'DELETE',
+        expectedDecision:   'DENY'
+      },
+      {
+        id:          'cross-tenant-demo',
+        label:       '🟠 Cross-Tenant Access Violation',
+        description: 'Bob (Tenant B Admin) attempts to access Tenant A resource — triggers tenant isolation enforcement',
+        userId:             'user-bob',
+        resourceTenantId:   'tenant-a',
+        requiredPermission: 'read:reports',
+        resource:           'reports-db',
+        action:             'GET',
+        expectedDecision:   'DENY'
+      },
+      {
+        id:          'legitimate-access',
+        label:       '🟢 Legitimate Direct Permission',
+        description: 'Charlie (Tenant A Admin) reads reports — direct permission, no escalation',
+        userId:             'user-charlie',
+        resourceTenantId:   'tenant-a',
+        requiredPermission: 'read:reports',
+        resource:           'reports-db',
+        action:             'GET',
+        expectedDecision:   'ALLOW'
+      },
+      {
+        id:          'sensitive-direct',
+        label:       '🟢 Sensitive Permission — Direct Admin',
+        description: 'Charlie (Tenant A Admin) deletes a user — sensitive permission directly assigned',
+        userId:             'user-charlie',
+        resourceTenantId:   'tenant-a',
+        requiredPermission: 'delete:users',
+        resource:           'user-002',
+        action:             'DELETE',
+        expectedDecision:   'ALLOW'
+      },
+      {
+        id:          'no-permission',
+        label:       '🔴 Insufficient Permissions',
+        description: 'Diana (Tenant B Analyst) tries to manage billing — not in her permission set',
+        userId:             'user-diana',
+        resourceTenantId:   'tenant-b',
+        requiredPermission: 'manage:billing',
+        resource:           'billing-portal',
+        action:             'GET',
+        expectedDecision:   'DENY'
+      }
+    ]
+  });
+});
+
+module.exports = router;

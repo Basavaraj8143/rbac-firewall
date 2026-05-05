@@ -1,0 +1,19 @@
+{
+  "name": "permission-firewall-backend",
+  "version": "1.0.0",
+  "description": "Multi-Tenant RBAC Privilege Escalation Detection Engine",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "morgan": "^1.10.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

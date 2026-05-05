@@ -1,0 +1,191 @@
+[
+  {
+    "id": "ca39edc8-a912-446e-ad8c-5ca5c5a6526d",
+    "timestamp": "2026-05-05T10:17:10.887Z",
+    "user_id": "user-charlie",
+    "user_name": "Charlie Davis",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-b",
+    "resource": "user-directory",
+    "action": "DELETE",
+    "required_permission": "read:profile",
+    "result": "DENY",
+    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-a\" but resource is owned by tenant \"tenant-b\"",
+    "escalation_path": null,
+    "details": {
+      "userTenant": "tenant-a",
+      "resourceTenant": "tenant-b"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "ef8014b5-d896-4436-8b8b-67c5b8434a52",
+    "timestamp": "2026-05-05T10:17:14.587Z",
+    "user_id": "user-charlie",
+    "user_name": "Charlie Davis",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-b",
+    "resource": "user-directory",
+    "action": "DELETE",
+    "required_permission": "read:profile",
+    "result": "DENY",
+    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-a\" but resource is owned by tenant \"tenant-b\"",
+    "escalation_path": null,
+    "details": {
+      "userTenant": "tenant-a",
+      "resourceTenant": "tenant-b"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "7d2f43a7-1bb1-4dd0-8c65-56553ce31f25",
+    "timestamp": "2026-05-05T10:17:15.358Z",
+    "user_id": "user-charlie",
+    "user_name": "Charlie Davis",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-b",
+    "resource": "user-directory",
+    "action": "DELETE",
+    "required_permission": "read:profile",
+    "result": "DENY",
+    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-a\" but resource is owned by tenant \"tenant-b\"",
+    "escalation_path": null,
+    "details": {
+      "userTenant": "tenant-a",
+      "resourceTenant": "tenant-b"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "9330aa7c-6565-4184-b759-cf71bd1e762e",
+    "timestamp": "2026-05-05T10:19:27.883Z",
+    "user_id": "user-alice",
+    "user_name": "Alice Chen",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-a",
+    "resource": "users-directory",
+    "action": "DELETE",
+    "required_permission": "read:profile",
+    "result": "ALLOW",
+    "reason": "Direct permission granted: \"read:profile\" is explicitly assigned to role \"Employee\"",
+    "escalation_path": null,
+    "details": {
+      "directRole": "Employee",
+      "method": "direct"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "4191aa94-847d-4287-a51f-263653a148b4",
+    "timestamp": "2026-05-05T10:19:32.130Z",
+    "user_id": "user-alice",
+    "user_name": "Alice Chen",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-b",
+    "resource": "users-directory",
+    "action": "DELETE",
+    "required_permission": "read:profile",
+    "result": "DENY",
+    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-a\" but resource is owned by tenant \"tenant-b\"",
+    "escalation_path": null,
+    "details": {
+      "userTenant": "tenant-a",
+      "resourceTenant": "tenant-b"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "8eef322c-2743-4638-874d-65539458c7cd",
+    "timestamp": "2026-05-05T10:20:21.220Z",
+    "user_id": "user-charlie",
+    "user_name": "Charlie Davis",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-b",
+    "resource": "user-directory",
+    "action": "DELETE",
+    "required_permission": "read:team",
+    "result": "DENY",
+    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-a\" but resource is owned by tenant \"tenant-b\"",
+    "escalation_path": null,
+    "details": {
+      "userTenant": "tenant-a",
+      "resourceTenant": "tenant-b"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "2cf2ac63-50c6-484a-85b3-c341ee59abcc",
+    "timestamp": "2026-05-05T10:48:02.964Z",
+    "user_id": "user-bob",
+    "user_name": "Bob Martinez",
+    "user_tenant_id": "tenant-b",
+    "resource_tenant_id": "tenant-a",
+    "resource": "reports-db",
+    "action": "GET",
+    "required_permission": "read:reports",
+    "result": "DENY",
+    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-b\" but resource is owned by tenant \"tenant-a\"",
+    "escalation_path": null,
+    "details": {
+      "userTenant": "tenant-b",
+      "resourceTenant": "tenant-a"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "ebf1bb53-4df0-41cc-8a78-5abb48a4e886",
+    "timestamp": "2026-05-05T10:48:14.403Z",
+    "user_id": "user-diana",
+    "user_name": "Diana Wu",
+    "user_tenant_id": "tenant-b",
+    "resource_tenant_id": "tenant-b",
+    "resource": "billing-portal",
+    "action": "GET",
+    "required_permission": "manage:billing",
+    "result": "DENY",
+    "reason": "Permission \"manage:billing\" is not assigned to role \"Analyst\" or any role in its inheritance chain",
+    "escalation_path": null,
+    "details": {
+      "directRole": "Analyst"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "8f9425b6-9cd4-401d-966c-5df4919e2b01",
+    "timestamp": "2026-05-05T10:48:38.364Z",
+    "user_id": "user-bob",
+    "user_name": "Bob Martinez",
+    "user_tenant_id": "tenant-b",
+    "resource_tenant_id": "tenant-a",
+    "resource": "reports-db",
+    "action": "GET",
+    "required_permission": "read:reports",
+    "result": "DENY",
+    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-b\" but resource is owned by tenant \"tenant-a\"",
+    "escalation_path": null,
+    "details": {
+      "userTenant": "tenant-b",
+      "resourceTenant": "tenant-a"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "adcd134d-3253-4cf5-8dbf-c747aaca9ef8",
+    "timestamp": "2026-05-05T10:48:48.204Z",
+    "user_id": "user-bob",
+    "user_name": "Bob Martinez",
+    "user_tenant_id": "tenant-b",
+    "resource_tenant_id": "tenant-a",
+    "resource": "reports-d",
+    "action": "GET",
+    "required_permission": "read:reports",
+    "result": "DENY",
+    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-b\" but resource is owned by tenant \"tenant-a\"",
+    "escalation_path": null,
+    "details": {
+      "userTenant": "tenant-b",
+      "resourceTenant": "tenant-a"
+    },
+    "source": "simulator"
+  }
+]

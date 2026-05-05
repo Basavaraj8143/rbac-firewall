@@ -1,0 +1,34 @@
+[
+  {
+    "id": "user-alice",
+    "name": "Alice Chen",
+    "email": "alice@acmecorp.io",
+    "tenant_id": "tenant-a",
+    "role_id": "role-a-employee",
+    "avatar": "AC"
+  },
+  {
+    "id": "user-charlie",
+    "name": "Charlie Davis",
+    "email": "charlie@acmecorp.io",
+    "tenant_id": "tenant-a",
+    "role_id": "role-a-admin",
+    "avatar": "CD"
+  },
+  {
+    "id": "user-bob",
+    "name": "Bob Martinez",
+    "email": "bob@betainc.io",
+    "tenant_id": "tenant-b",
+    "role_id": "role-b-admin",
+    "avatar": "BM"
+  },
+  {
+    "id": "user-diana",
+    "name": "Diana Wu",
+    "email": "diana@betainc.io",
+    "tenant_id": "tenant-b",
+    "role_id": "role-b-analyst",
+    "avatar": "DW"
+  }
+]

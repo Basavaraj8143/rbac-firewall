@@ -1,0 +1,14 @@
+[
+  {
+    "parent_role_id": "role-a-manager",
+    "child_role_id":  "role-a-employee",
+    "tenant_id":      "tenant-a",
+    "description":    "Employee inherits from Manager (escalation path)"
+  },
+  {
+    "parent_role_id": "role-a-admin",
+    "child_role_id":  "role-a-manager",
+    "tenant_id":      "tenant-a",
+    "description":    "Manager inherits from Admin (escalation path)"
+  }
+]

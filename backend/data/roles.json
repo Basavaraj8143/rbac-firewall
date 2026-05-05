@@ -1,0 +1,37 @@
+[
+  {
+    "id": "role-a-employee",
+    "tenant_id": "tenant-a",
+    "name": "Employee",
+    "level": 1,
+    "permissions": ["read:reports", "read:profile"]
+  },
+  {
+    "id": "role-a-manager",
+    "tenant_id": "tenant-a",
+    "name": "Manager",
+    "level": 2,
+    "permissions": ["read:reports", "read:profile", "write:reports", "read:team"]
+  },
+  {
+    "id": "role-a-admin",
+    "tenant_id": "tenant-a",
+    "name": "Admin",
+    "level": 3,
+    "permissions": ["read:reports", "read:profile", "write:reports", "read:team", "delete:users", "manage:billing", "export:data"]
+  },
+  {
+    "id": "role-b-analyst",
+    "tenant_id": "tenant-b",
+    "name": "Analyst",
+    "level": 1,
+    "permissions": ["read:reports", "read:metrics"]
+  },
+  {
+    "id": "role-b-admin",
+    "tenant_id": "tenant-b",
+    "name": "Admin",
+    "level": 3,
+    "permissions": ["read:reports", "read:metrics", "write:reports", "delete:users", "manage:billing"]
+  }
+]
