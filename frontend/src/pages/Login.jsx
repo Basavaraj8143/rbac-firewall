@@ -1,189 +1,289 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUsers, loginAsUser } from '../api';
+import { getUsers, loginAsUser, loginSecure } from '../api';
 import { useAuth } from '../context/AuthContext';
-import { Shield, Brain, Ban, MessageSquare, ClipboardList, LogIn, AlertTriangle } from 'lucide-react';
+import { LogIn, AlertTriangle, Lock } from 'lucide-react';
 
 export default function Login() {
-  const [users, setUsers]       = useState([]);
+  const [users, setUsers] = useState([]);
   const [selected, setSelected] = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState('');
-  const { login }               = useAuth();
-  const navigate                = useNavigate();
+  const [mode, setMode] = useState('demo');
+  const [secureEmail, setSecureEmail] = useState('');
+  const [securePassword, setSecurePassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    getUsers().then(r => setUsers(r.data.users)).catch(() => setError('Backend unreachable'));
+    getUsers()
+      .then((response) => {
+        setUsers(response.data.users);
+        if (response.data.users.length > 0) {
+          setSecureEmail(response.data.users[0].email);
+        }
+      })
+      .catch(() => setError('Backend unreachable'));
   }, []);
 
+  const selectedUser = useMemo(() => users.find((user) => user.id === selected), [users, selected]);
+
   const handleLogin = async () => {
-    if (!selected) return;
+    setError('');
+
+    if (mode === 'demo' && !selected) {
+      setError('Please choose a demo user.');
+      return;
+    }
+
+    if (mode === 'secure' && (!secureEmail || !securePassword)) {
+      setError('Email and password are required for secure login.');
+      return;
+    }
+
     setLoading(true);
+
     try {
-      const res = await loginAsUser(selected);
-      login(res.data.user);
-      navigate('/simulator');
-    } catch {
-      setError('Login failed');
+      if (mode === 'demo') {
+        const response = await loginAsUser(selected);
+        login(response.data.user, { mode: 'demo' });
+      } else {
+        const response = await loginSecure(secureEmail, securePassword);
+        login(response.data.user, {
+          mode: 'secure',
+          token: response.data.token,
+          expiresIn: response.data.expiresIn
+        });
+      }
+      navigate('/welcome');
+    } catch (requestError) {
+      const serverMessage = requestError?.response?.data?.error;
+      setError(serverMessage || 'Login failed');
     } finally {
       setLoading(false);
     }
   };
 
-  const selectedUser = users.find(u => u.id === selected);
-
   return (
     <div className="login-page">
-      <div className="login-card">
-        {/* Brand */}
-        <div className="login-brand">
-          <div className="login-brand-icon"><Shield size={48} color="var(--accent)" /></div>
-          <h1 className="login-title">Permission Firewall</h1>
-          <p className="login-subtitle">
-            Multi-Tenant RBAC Escalation Detection Engine
-          </p>
+      <section className="login-shell fade-up">
+        <div className="section-label">Permission Firewall</div>
+        <h1 className="login-title">Block privilege escalation before it reaches your API.</h1>
+        <p className="page-subtitle">
+          Tenant-safe RBAC checks with explainable decisions and full audit logs.
+        </p>
+
+        <div className="login-timeline" aria-label="agent timeline">
+          <span className="badge timeline-pill-thinking">Thinking</span>
+          <span className="badge timeline-pill-grep">Grepping</span>
+          <span className="badge timeline-pill-read">Reading</span>
+          <span className="badge timeline-pill-edit">Editing</span>
+          <span className="badge timeline-pill-done">Done</span>
         </div>
 
-        <div className="login-divider" />
-
-        {/* Engine info */}
-        <div className="login-info-grid">
-          <div className="login-info-item">
-            <div className="login-info-icon"><Brain size={24} color="var(--accent)" /></div>
-            <div>
-              <div className="login-info-label">Analysis</div>
-              <div className="login-info-value">DFS/BFS Graph Traversal</div>
-            </div>
-          </div>
-          <div className="login-info-item">
-            <div className="login-info-icon"><Ban size={24} color="var(--accent)" /></div>
-            <div>
-              <div className="login-info-label">Isolation</div>
-              <div className="login-info-value">Strict Tenant Boundary</div>
-            </div>
-          </div>
-          <div className="login-info-item">
-            <div className="login-info-icon"><MessageSquare size={24} color="var(--accent)" /></div>
-            <div>
-              <div className="login-info-label">Denials</div>
-              <div className="login-info-value">Explainable Responses</div>
-            </div>
-          </div>
-          <div className="login-info-item">
-            <div className="login-info-icon"><ClipboardList size={24} color="var(--accent)" /></div>
-            <div>
-              <div className="login-info-label">Audit</div>
-              <div className="login-info-value">Full Request Logging</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="login-divider" />
-
-        {/* User select */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div className="form-group">
-            <label className="form-label">Select Demo User</label>
-            <select
-              className="form-select"
-              value={selected}
-              onChange={e => setSelected(e.target.value)}
+        <div className="card login-card fade-up delay-1">
+          <div className="mode-toggle" role="tablist" aria-label="Login mode">
+            <button
+              type="button"
+              className={`btn btn-sm ${mode === 'demo' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setMode('demo')}
             >
-              <option value="">— Choose a user identity —</option>
-              {users.map(u => (
-                <option key={u.id} value={u.id}>
-                  {u.name} · {u.roleName} @ {u.tenantName}
-                </option>
-              ))}
-            </select>
+              Demo Login
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${mode === 'secure' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setMode('secure')}
+            >
+              Secure Login
+            </button>
           </div>
 
-          {/* Selected user preview */}
-          {selectedUser && (
-            <div className="login-user-preview animate-in">
-              <div className="avatar">{selectedUser.avatar}</div>
-              <div>
-                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  {selectedUser.name}
-                </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 2 }}>
-                  <span className="perm-tag" style={{ margin: 0 }}>{selectedUser.roleName}</span>
-                  <span style={{ margin: '0 6px', color: 'var(--text-muted)' }}>at</span>
-                  {selectedUser.tenantName}
-                </div>
+          {mode === 'demo' ? (
+            <>
+              <div className="mode-note">Demo mode - no password required.</div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="user-select">Select Demo User</label>
+                <select
+                  id="user-select"
+                  className="form-select"
+                  value={selected}
+                  onChange={(event) => setSelected(event.target.value)}
+                >
+                  <option value="">Choose a user identity</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name} - {user.roleName} @ {user.tenantName}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </div>
+
+              {selectedUser ? (
+                <div className="login-user-preview">
+                  <span className="avatar">{selectedUser.avatar}</span>
+                  <div>
+                    <div className="login-user-name">{selectedUser.name}</div>
+                    <div className="login-user-meta">
+                      <span className="perm-tag">{selectedUser.roleName}</span> {selectedUser.tenantName}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <div className="mode-note">
+                Secure mode - email plus password. Demo password for seeded users: <code>Firewall@2026</code>
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="secure-email">Work Email</label>
+                <input
+                  id="secure-email"
+                  type="email"
+                  className="form-input"
+                  value={secureEmail}
+                  onChange={(event) => setSecureEmail(event.target.value)}
+                  placeholder="name@company.com"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="secure-password">Password</label>
+                <input
+                  id="secure-password"
+                  type="password"
+                  className="form-input"
+                  value={securePassword}
+                  onChange={(event) => setSecurePassword(event.target.value)}
+                  placeholder="Enter your password"
+                />
+              </div>
+            </>
           )}
 
-          {error && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--deny)', fontSize: '0.82rem', background: 'var(--deny-dim)', padding: '10px 14px', borderRadius: 'var(--radius-md)' }}>
-              <AlertTriangle size={16} /> {error}
+          {error ? (
+            <div className="login-error">
+              <AlertTriangle size={15} />
+              {error}
             </div>
-          )}
+          ) : null}
 
-          <button
-            className="btn btn-primary btn-lg"
-            onClick={handleLogin}
-            disabled={!selected || loading}
-          >
-            {loading ? <span className="spinner" /> : <LogIn size={20} />}
-            {loading ? 'Authenticating...' : 'Enter Firewall Console'}
-          </button>
+          <div className="login-cta-row">
+            <button type="button" className="btn btn-download" onClick={handleLogin} disabled={loading}>
+              {loading ? <span className="spinner" /> : mode === 'secure' ? <Lock size={16} /> : <LogIn size={16} />}
+              {loading ? 'Authenticating...' : mode === 'secure' ? 'Enter Secure Console' : 'Enter Demo Console'}
+            </button>
+          </div>
         </div>
-      </div>
+      </section>
 
       <style>{`
         .login-page {
           min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: var(--bg-base);
-          background-image: radial-gradient(ellipse at 20% 50%, rgba(59,130,246,0.06) 0%, transparent 60%),
-                            radial-gradient(ellipse at 80% 20%, rgba(239,68,68,0.04) 0%, transparent 50%);
+          display: grid;
+          place-items: center;
           padding: 24px;
         }
-        .login-card {
-          width: 100%;
-          max-width: 520px;
-          background: var(--bg-card);
-          border: 1px solid var(--border-bright);
-          border-radius: var(--radius-xl);
-          padding: 40px;
-          box-shadow: var(--shadow-card), 0 0 80px rgba(59,130,246,0.08);
+
+        .login-shell {
+          width: min(820px, 100%);
         }
-        .login-brand { text-align: center; margin-bottom: 24px; display: flex; flex-direction: column; align-items: center; }
-        .login-brand-icon { margin-bottom: 12px; }
+
         .login-title {
-          font-size: 1.6rem;
-          font-weight: 800;
-          color: var(--text-primary);
-          letter-spacing: -0.03em;
-          margin-bottom: 8px;
+          margin: 10px 0 0;
+          color: var(--ink);
+          font-size: 72px;
+          line-height: 1.1;
+          letter-spacing: -2.16px;
+          font-weight: 400;
+          max-width: 780px;
         }
-        .login-subtitle { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
-        .login-divider { height: 1px; background: var(--border); margin: 24px 0; }
-        .login-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .login-info-item {
+
+        .login-card {
+          margin-top: 24px;
+          display: grid;
+          gap: 16px;
+        }
+
+        .mode-toggle {
           display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 12px;
-          background: var(--bg-elevated);
-          border-radius: var(--radius-md);
-          border: 1px solid var(--border);
+          gap: 8px;
+          flex-wrap: wrap;
         }
-        .login-info-icon { display: flex; align-items: center; justify-content: center; }
-        .login-info-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
-        .login-info-value { font-size: 0.75rem; color: var(--text-primary); font-weight: 500; margin-top: 2px; }
+
+        .mode-note {
+          color: var(--muted);
+          font-size: 13px;
+          line-height: 1.5;
+        }
+
+        .mode-note code {
+          color: var(--ink);
+          font-family: var(--font-mono);
+          font-size: 12px;
+        }
+
+        .login-timeline {
+          margin-top: 18px;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
         .login-user-preview {
           display: flex;
           align-items: center;
-          gap: 12px;
-          padding: 14px;
-          background: var(--accent-dim);
-          border: 1px solid rgba(59,130,246,0.2);
+          gap: 10px;
+          border: 1px solid var(--hairline);
           border-radius: var(--radius-md);
+          background: var(--canvas-soft);
+          padding: 10px;
+        }
+
+        .login-user-name {
+          color: var(--ink);
+          font-size: 14px;
+          font-weight: 600;
+        }
+
+        .login-user-meta {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-top: 2px;
+          color: var(--muted);
+          font-size: 12px;
+        }
+
+        .login-error {
+          border: 1px solid color-mix(in srgb, var(--error) 30%, var(--hairline) 70%);
+          border-radius: var(--radius-md);
+          background: color-mix(in srgb, var(--error) 12%, var(--surface-card) 88%);
+          padding: 10px 12px;
+          color: var(--error);
+          font-size: 13px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .login-cta-row {
+          display: flex;
+          justify-content: flex-start;
+        }
+
+        @media (max-width: 1024px) {
+          .login-title {
+            font-size: 56px;
+            letter-spacing: -1.2px;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .login-title {
+            font-size: 32px;
+            letter-spacing: -0.64px;
+          }
         }
       `}</style>
     </div>

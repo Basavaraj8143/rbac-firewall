@@ -1,138 +1,135 @@
-/**
- * RoleGraph.jsx — D3.js Force-Directed Role Hierarchy Visualization
- *
- * Renders role nodes as circles with directed edges showing inheritance.
- * Escalation paths are highlighted in red.
- */
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { Network } from 'lucide-react';
 
 const LEVEL_COLORS = {
-  1: '#10b981', // Employee → green
-  2: '#f59e0b', // Manager  → amber
-  3: '#ef4444', // Admin    → red
+  1: '#9fc9a2',
+  2: '#9fbbe0',
+  3: '#c0a8dd',
+  4: '#dfa88f',
+  5: '#c08532',
 };
 
 export default function RoleGraph({ nodes = [], links = [] }) {
   const svgRef = useRef(null);
 
   useEffect(() => {
-    if (!nodes.length) return;
+    if (!nodes.length || !svgRef.current) {
+      return;
+    }
 
-    const width  = svgRef.current.clientWidth  || 600;
+    const width = svgRef.current.clientWidth || 600;
     const height = svgRef.current.clientHeight || 400;
 
-    // Clear previous render
     d3.select(svgRef.current).selectAll('*').remove();
 
     const svg = d3.select(svgRef.current)
       .attr('width', width)
       .attr('height', height);
 
-    // Arrow marker definitions
     const defs = svg.append('defs');
 
-    ['#8892a4', '#ef4444'].forEach((color, i) => {
-      defs.append('marker')
-        .attr('id', `arrow-${i}`)
-        .attr('viewBox', '0 -5 10 10')
-        .attr('refX', 28)
-        .attr('refY', 0)
-        .attr('markerWidth', 6)
-        .attr('markerHeight', 6)
-        .attr('orient', 'auto')
-        .append('path')
-        .attr('d', 'M0,-5L10,0L0,5')
-        .attr('fill', color);
-    });
+    defs.append('marker')
+      .attr('id', 'role-arrow')
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', 26)
+      .attr('refY', 0)
+      .attr('markerWidth', 6)
+      .attr('markerHeight', 6)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .attr('fill', '#cfcdc4');
 
-    // Deep-copy nodes/links for D3 mutation
-    const simNodes = nodes.map(n => ({ ...n }));
-    const simLinks = links.map(l => ({ ...l }));
+    const simNodes = nodes.map((node) => ({ ...node }));
+    const simLinks = links.map((link) => ({ ...link }));
 
     const simulation = d3.forceSimulation(simNodes)
-      .force('link',   d3.forceLink(simLinks).id(d => d.id).distance(120))
-      .force('charge', d3.forceManyBody().strength(-350))
+      .force('link', d3.forceLink(simLinks).id((node) => node.id).distance(118))
+      .force('charge', d3.forceManyBody().strength(-320))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide(50));
+      .force('collision', d3.forceCollide(48));
 
-    // Links
-    const link = svg.append('g').attr('class', 'links')
+    const link = svg.append('g')
       .selectAll('line')
       .data(simLinks)
       .join('line')
-      .attr('stroke', '#ef4444')
-      .attr('stroke-opacity', 0.6)
-      .attr('stroke-width', 2)
-      .attr('marker-end', 'url(#arrow-1)');
+      .attr('stroke', '#cfcdc4')
+      .attr('stroke-width', 1.5)
+      .attr('marker-end', 'url(#role-arrow)');
 
-    // Node groups
-    const node = svg.append('g').attr('class', 'nodes')
+    const node = svg.append('g')
       .selectAll('g')
       .data(simNodes)
       .join('g')
       .call(
         d3.drag()
-          .on('start', (event, d) => {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x; d.fy = d.y;
+          .on('start', (event, item) => {
+            if (!event.active) {
+              simulation.alphaTarget(0.3).restart();
+            }
+            item.fx = item.x;
+            item.fy = item.y;
           })
-          .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
-          .on('end', (event, d) => {
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null; d.fy = null;
+          .on('drag', (event, item) => {
+            item.fx = event.x;
+            item.fy = event.y;
+          })
+          .on('end', (event, item) => {
+            if (!event.active) {
+              simulation.alphaTarget(0);
+            }
+            item.fx = null;
+            item.fy = null;
           })
       );
 
-    // Circle
     node.append('circle')
-      .attr('r', 28)
-      .attr('fill', d => `${LEVEL_COLORS[d.level] || '#3b82f6'}22`)
-      .attr('stroke', d => LEVEL_COLORS[d.level] || '#3b82f6')
+      .attr('r', 26)
+      .attr('fill', '#fafaf7')
+      .attr('stroke', (item) => LEVEL_COLORS[item.level] || '#f54e00')
       .attr('stroke-width', 2);
 
-    // Role name label
     node.append('text')
-      .text(d => d.name)
+      .text((item) => item.name)
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
-      .attr('fill', d => LEVEL_COLORS[d.level] || '#3b82f6')
+      .attr('fill', '#26251e')
       .attr('font-size', '11px')
-      .attr('font-weight', '700')
-      .attr('font-family', 'Inter, sans-serif');
+      .attr('font-weight', '600')
+      .attr('font-family', 'Inter, system-ui, sans-serif');
 
-    // Level badge (below circle)
     node.append('text')
-      .text(d => `L${d.level}`)
+      .text((item) => `L${item.level}`)
       .attr('text-anchor', 'middle')
-      .attr('y', 40)
-      .attr('fill', '#4a5568')
-      .attr('font-size', '9px')
+      .attr('y', 38)
+      .attr('fill', '#807d72')
+      .attr('font-size', '10px')
       .attr('font-family', 'JetBrains Mono, monospace');
 
-    // Tooltip: permissions on hover
     node.append('title')
-      .text(d => `${d.name}\nPermissions: ${(d.permissions || []).join(', ')}`);
+      .text((item) => `${item.name}\nPermissions: ${(item.permissions || []).join(', ')}`);
 
     simulation.on('tick', () => {
       link
-        .attr('x1', d => d.source.x)
-        .attr('y1', d => d.source.y)
-        .attr('x2', d => d.target.x)
-        .attr('y2', d => d.target.y);
+        .attr('x1', (item) => item.source.x)
+        .attr('y1', (item) => item.source.y)
+        .attr('x2', (item) => item.target.x)
+        .attr('y2', (item) => item.target.y);
 
-      node.attr('transform', d => `translate(${d.x},${d.y})`);
+      node.attr('transform', (item) => `translate(${item.x},${item.y})`);
     });
 
-    return () => simulation.stop();
+    return () => {
+      simulation.stop();
+    };
   }, [nodes, links]);
 
   if (!nodes.length) {
     return (
       <div className="empty-state">
-        <div className="empty-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Network size={40} /></div>
-        <div>Select a tenant to visualize its role hierarchy</div>
+        <Network size={34} />
+        <div>Select a tenant to visualize role hierarchy.</div>
       </div>
     );
   }
@@ -140,7 +137,7 @@ export default function RoleGraph({ nodes = [], links = [] }) {
   return (
     <svg
       ref={svgRef}
-      style={{ width: '100%', height: '400px', background: 'var(--bg-base)', borderRadius: 'var(--radius-md)' }}
+      style={{ width: '100%', height: '400px', background: 'var(--canvas-soft)', borderRadius: 'var(--radius-md)', border: '1px solid var(--hairline)' }}
     />
   );
 }

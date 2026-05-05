@@ -1,25 +1,29 @@
-/**
- * AuditTable.jsx — Real-time Audit Log Table
- */
 import { ClipboardList, AlertTriangle, Check, X } from 'lucide-react';
 
-function truncate(str, n = 60) {
-  return str && str.length > n ? str.slice(0, n) + '…' : str;
+function truncate(text, size = 60) {
+  return text && text.length > size ? `${text.slice(0, size)}...` : text;
 }
 
-function timeAgo(iso) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const s = Math.floor(diff / 1000);
-  if (s < 60)  return `${s}s ago`;
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  return new Date(iso).toLocaleTimeString();
+function timeAgo(isoTime) {
+  const diffMs = Date.now() - new Date(isoTime).getTime();
+  const seconds = Math.floor(diffMs / 1000);
+
+  if (seconds < 60) {
+    return `${seconds}s ago`;
+  }
+
+  if (seconds < 3600) {
+    return `${Math.floor(seconds / 60)}m ago`;
+  }
+
+  return new Date(isoTime).toLocaleTimeString();
 }
 
 export default function AuditTable({ logs = [], compact = false }) {
   if (logs.length === 0) {
     return (
       <div className="empty-state">
-        <div className="empty-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ClipboardList size={40} /></div>
+        <ClipboardList size={34} />
         <div>No audit events yet. Run the simulator to generate activity.</div>
       </div>
     );
@@ -36,51 +40,48 @@ export default function AuditTable({ logs = [], compact = false }) {
             <th>Permission</th>
             <th>Resource</th>
             <th>Result</th>
-            {!compact && <th>Reason</th>}
+            {!compact ? <th>Reason</th> : null}
           </tr>
         </thead>
+
         <tbody>
-          {logs.map(log => (
+          {logs.map((log) => (
             <tr key={log.id}>
-              <td className="mono" style={{ whiteSpace: 'nowrap', color: 'var(--text-muted)' }}>
-                {timeAgo(log.timestamp)}
-              </td>
+              <td className="mono">{timeAgo(log.timestamp)}</td>
+
               <td>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div className="avatar" style={{ width: 26, height: 26, fontSize: '0.6rem' }}>
-                    {(log.user_name || '?').split(' ').map(n => n[0]).join('')}
-                  </div>
-                  <span style={{ color: 'var(--text-primary)', fontSize: '0.82rem' }}>
-                    {log.user_name || log.user_id}
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  <span className="avatar" style={{ width: 24, height: 24, fontSize: 11 }}>
+                    {(log.user_name || '?').split(' ').map((part) => part[0]).join('')}
                   </span>
+                  <span style={{ color: 'var(--ink)', fontSize: 13 }}>{log.user_name || log.user_id}</span>
                 </div>
               </td>
+
               <td>
-                <span className="badge badge-accent" style={{ fontSize: '0.65rem' }}>
-                  {log.user_tenant_id === log.resource_tenant_id ? log.user_tenant_id : (
-                    <span title="Cross-tenant!" style={{ display: 'flex', alignItems: 'center' }}>
-                      <AlertTriangle size={10} style={{ marginRight: 4 }} /> {log.user_tenant_id}
-                    </span>
-                  )}
-                </span>
+                {log.user_tenant_id === log.resource_tenant_id ? (
+                  <span className="badge badge-accent">{log.user_tenant_id}</span>
+                ) : (
+                  <span className="badge badge-deny">
+                    <AlertTriangle size={11} /> {log.user_tenant_id}
+                  </span>
+                )}
               </td>
+
               <td>
                 <span className="perm-tag">{log.required_permission}</span>
               </td>
-              <td className="mono" style={{ fontSize: '0.75rem' }}>
-                {log.resource}
-              </td>
+
+              <td className="mono">{log.resource}</td>
+
               <td>
                 <span className={`badge ${log.result === 'ALLOW' ? 'badge-allow' : 'badge-deny'}`}>
-                  <span>{log.result === 'ALLOW' ? <Check size={12} style={{ marginRight: 2 }} /> : <X size={12} style={{ marginRight: 2 }} />}</span>
+                  {log.result === 'ALLOW' ? <Check size={11} /> : <X size={11} />}
                   {log.result}
                 </span>
               </td>
-              {!compact && (
-                <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)', maxWidth: 280 }}>
-                  {truncate(log.reason)}
-                </td>
-              )}
+
+              {!compact ? <td style={{ fontSize: 13 }}>{truncate(log.reason)}</td> : null}
             </tr>
           ))}
         </tbody>

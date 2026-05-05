@@ -13,6 +13,7 @@ const api = axios.create({
 // ── Auth ──────────────────────────────────────────────────────────────────────
 export const getUsers      = ()           => api.get('/auth/users');
 export const loginAsUser   = (userId)     => api.post('/auth/login', { userId });
+export const loginSecure   = (email, password) => api.post('/auth/login/secure', { email, password });
 
 // ── Simulator ─────────────────────────────────────────────────────────────────
 export const getScenarios  = ()           => api.get('/simulate/scenarios');

@@ -1,4 +1,5 @@
 [
-  { "id": "tenant-a", "name": "Acme Corp",  "domain": "acmecorp.io" },
-  { "id": "tenant-b", "name": "Beta Inc",   "domain": "betainc.io"  }
+  { "id": "tenant-a", "name": "Acme Corp", "domain": "acmecorp.io" },
+  { "id": "tenant-b", "name": "Beta Inc", "domain": "betainc.io" },
+  { "id": "tenant-c", "name": "Apex Solutions", "domain": "apexsolutions.io" }
 ]

@@ -1,135 +1,204 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { getAllRoles, getRoleGraph } from '../api';
 import RoleGraph from '../components/RoleGraph';
-import { Network, Building2 } from 'lucide-react';
 
-const TENANTS = [
-  { id: 'tenant-a', name: 'Acme Corp' },
-  { id: 'tenant-b', name: 'Beta Inc'  },
-];
-
-const LEVEL_LABELS = { 1: 'Employee', 2: 'Manager', 3: 'Admin' };
-const LEVEL_COLORS = { 1: 'var(--allow)', 2: 'var(--warn)', 3: 'var(--deny)' };
+const LEVEL_LABELS = {
+  1: 'Entry',
+  2: 'Analyst',
+  3: 'Lead',
+  4: 'Security',
+  5: 'Admin',
+};
+const LEVEL_BADGES = {
+  1: 'timeline-pill-grep',
+  2: 'timeline-pill-read',
+  3: 'timeline-pill-edit',
+  4: 'timeline-pill-thinking',
+  5: 'timeline-pill-done',
+};
 
 export default function RoleManager() {
-  const [selectedTenant, setTenant] = useState('tenant-a');
-  const [rolesData, setRolesData]   = useState(null);
-  const [graphData, setGraphData]   = useState({ nodes: [], links: [] });
+  const [selectedTenant, setSelectedTenant] = useState('tenant-a');
+  const [rolesData, setRolesData] = useState(null);
+  const [graphData, setGraphData] = useState({ nodes: [], links: [] });
 
   useEffect(() => {
-    getAllRoles().then(r => setRolesData(r.data));
+    getAllRoles().then((response) => setRolesData(response.data));
   }, []);
 
   useEffect(() => {
-    getRoleGraph(selectedTenant).then(r => setGraphData(r.data));
+    getRoleGraph(selectedTenant).then((response) => setGraphData(response.data));
   }, [selectedTenant]);
 
-  const tenantRoles = rolesData?.roles?.filter(r => r.tenant_id === selectedTenant) || [];
-  const inheritance = rolesData?.inheritance?.filter(e => e.tenant_id === selectedTenant) || [];
+  const tenantRoles = rolesData?.roles?.filter((role) => role.tenant_id === selectedTenant) || [];
+  const inheritance = rolesData?.inheritance?.filter((edge) => edge.tenant_id === selectedTenant) || [];
+  const tenants = rolesData?.tenants || [];
 
   return (
     <div>
-      <div className="page-header">
-        <h1 className="page-title" style={{ display: 'flex', alignItems: 'center' }}><Network size={28} style={{ marginRight: 8, color: 'var(--accent)' }} /> Role Hierarchy Graph</h1>
-        <p className="page-subtitle">
-          Visualize role inheritance chains and identify escalation paths
-        </p>
+      <div className="page-header fade-up">
+        <h1 className="page-title">Role Hierarchy Graph</h1>
+        <p className="page-subtitle">Visualize inheritance chains and sensitive escalation paths.</p>
       </div>
 
-      {/* Tenant selector */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
-        {TENANTS.map(t => (
+      <div className="tenant-switch fade-up delay-1">
+        {tenants.map((tenant) => (
           <button
-            key={t.id}
-            className={`btn ${selectedTenant === t.id ? 'btn-primary' : 'btn-ghost'}`}
-            onClick={() => setTenant(t.id)}
-            style={{ display: 'flex', alignItems: 'center' }}
+            key={tenant.id}
+            type="button"
+            className={`btn ${selectedTenant === tenant.id ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setSelectedTenant(tenant.id)}
           >
-            <Building2 size={16} style={{ marginRight: 6 }} /> {t.name}
+            {tenant.name}
           </button>
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24 }}>
-
-        {/* Graph */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
-            <div className="card-title">Force-Directed Role Graph</div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>
-              Arrows indicate inheritance direction (child → parent). Drag nodes to explore.
+      <div className="roles-layout fade-up delay-2">
+        <div className="card graph-wrap">
+          <div className="card-header">
+            <div>
+              <div className="section-label">Graph</div>
+              <h2 className="card-title">Force-Directed Role Graph</h2>
+              <p className="card-subtitle">Arrows show child-to-parent inheritance edges.</p>
             </div>
           </div>
           <RoleGraph nodes={graphData.nodes} links={graphData.links} />
 
-          {/* Legend */}
-          <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: 20 }}>
-            {Object.entries(LEVEL_COLORS).map(([level, color]) => (
-              <div key={level} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                <div style={{ width: 12, height: 12, borderRadius: '50%', border: `2px solid ${color}`, background: `${color}22` }} />
-                Level {level} — {LEVEL_LABELS[level]}
-              </div>
-            ))}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              <div style={{ width: 20, height: 2, background: 'var(--deny)' }} />
-              Inheritance Edge (Escalation Path)
-            </div>
+          <div className="legend-row">
+            <span className="badge timeline-pill-grep">Level 1 Employee</span>
+            <span className="badge timeline-pill-read">Level 2 Manager</span>
+            <span className="badge timeline-pill-done">Level 3 Admin</span>
           </div>
         </div>
 
-        {/* Right panel — Roles detail */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {tenantRoles.map(role => (
-            <div key={role.id} className="card" style={{ padding: 18 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <aside className="roles-side">
+          {tenantRoles.map((role) => (
+            <div key={role.id} className="card role-item">
+              <div className="role-head">
                 <div>
-                  <div style={{ fontWeight: 700, color: LEVEL_COLORS[role.level] || 'var(--accent)', fontSize: '0.95rem' }}>
-                    {role.name}
-                  </div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                    Level {role.level} — {LEVEL_LABELS[role.level]}
-                  </div>
+                  <h3>{role.name}</h3>
+                  <p>Level {role.level} - {LEVEL_LABELS[role.level]}</p>
                 </div>
-                <span className="badge badge-accent" style={{ fontSize: '0.65rem' }}>
-                  L{role.level}
-                </span>
+                <span className={`badge ${LEVEL_BADGES[role.level] || 'badge-accent'}`}>L{role.level}</span>
               </div>
 
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                Permissions
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                {role.permissions.map(p => (
-                  <span key={p} className="perm-tag">{p}</span>
+              <div className="role-perms">
+                {role.permissions.map((permission) => (
+                  <span key={permission} className="perm-tag">{permission}</span>
                 ))}
               </div>
             </div>
           ))}
 
-          {/* Inheritance edges */}
-          {inheritance.length > 0 && (
-            <div className="card" style={{ padding: 18 }}>
-              <div className="card-title" style={{ marginBottom: 14 }}>Inheritance Edges</div>
-              {inheritance.map((edge, i) => {
-                const child  = rolesData.roles.find(r => r.id === edge.child_role_id);
-                const parent = rolesData.roles.find(r => r.id === edge.parent_role_id);
-                return (
-                  <div key={i} style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '8px 0', borderBottom: i < inheritance.length - 1 ? '1px solid var(--border)' : 'none',
-                    fontSize: '0.78rem'
-                  }}>
-                    <span style={{ color: 'var(--allow)', fontWeight: 600 }}>{child?.name}</span>
-                    <span style={{ color: 'var(--deny)' }}>→</span>
-                    <span style={{ color: 'var(--deny)', fontWeight: 600 }}>{parent?.name}</span>
-                    <span className="badge badge-deny" style={{ marginLeft: 'auto', fontSize: '0.6rem' }}>Escalates</span>
-                  </div>
-                );
-              })}
+          {inheritance.length > 0 ? (
+            <div className="card">
+              <div className="section-label">Edges</div>
+              <h2 className="card-title">Inheritance</h2>
+              <div className="edge-list">
+                {inheritance.map((edge, index) => {
+                  const child = rolesData.roles.find((role) => role.id === edge.child_role_id);
+                  const parent = rolesData.roles.find((role) => role.id === edge.parent_role_id);
+                  return (
+                    <div key={`${edge.child_role_id}-${edge.parent_role_id}-${index}`} className="edge-item">
+                      <span>{child?.name}</span>
+                      <span className="path-arrow">&rarr;</span>
+                      <span>{parent?.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          )}
-        </div>
+          ) : null}
+        </aside>
       </div>
+
+      <style>{`
+        .tenant-switch {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-bottom: 18px;
+        }
+
+        .roles-layout {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 320px;
+          gap: 20px;
+        }
+
+        .graph-wrap {
+          padding-bottom: 16px;
+        }
+
+        .legend-row {
+          margin-top: 14px;
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .roles-side {
+          display: grid;
+          gap: 14px;
+          align-content: start;
+        }
+
+        .role-item {
+          padding: 16px;
+        }
+
+        .role-head {
+          display: flex;
+          justify-content: space-between;
+          gap: 10px;
+          align-items: flex-start;
+        }
+
+        .role-head h3 {
+          margin: 0;
+          color: var(--ink);
+          font-size: 16px;
+          font-weight: 600;
+        }
+
+        .role-head p {
+          margin: 4px 0 0;
+          color: var(--muted);
+          font-size: 13px;
+        }
+
+        .role-perms {
+          margin-top: 12px;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+
+        .edge-list {
+          margin-top: 10px;
+          display: grid;
+          gap: 8px;
+        }
+
+        .edge-item {
+          border: 1px solid var(--hairline);
+          border-radius: var(--radius-md);
+          background: var(--canvas-soft);
+          color: var(--ink);
+          font-size: 13px;
+          padding: 9px 10px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        @media (max-width: 1024px) {
+          .roles-layout {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
     </div>
   );
 }

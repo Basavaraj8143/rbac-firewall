@@ -1,90 +1,56 @@
 [
   {
-    "id": "ca39edc8-a912-446e-ad8c-5ca5c5a6526d",
-    "timestamp": "2026-05-05T10:17:10.887Z",
-    "user_id": "user-charlie",
-    "user_name": "Charlie Davis",
-    "user_tenant_id": "tenant-a",
-    "resource_tenant_id": "tenant-b",
-    "resource": "user-directory",
-    "action": "DELETE",
-    "required_permission": "read:profile",
-    "result": "DENY",
-    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-a\" but resource is owned by tenant \"tenant-b\"",
-    "escalation_path": null,
-    "details": {
-      "userTenant": "tenant-a",
-      "resourceTenant": "tenant-b"
-    },
-    "source": "simulator"
-  },
-  {
-    "id": "ef8014b5-d896-4436-8b8b-67c5b8434a52",
-    "timestamp": "2026-05-05T10:17:14.587Z",
-    "user_id": "user-charlie",
-    "user_name": "Charlie Davis",
-    "user_tenant_id": "tenant-a",
-    "resource_tenant_id": "tenant-b",
-    "resource": "user-directory",
-    "action": "DELETE",
-    "required_permission": "read:profile",
-    "result": "DENY",
-    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-a\" but resource is owned by tenant \"tenant-b\"",
-    "escalation_path": null,
-    "details": {
-      "userTenant": "tenant-a",
-      "resourceTenant": "tenant-b"
-    },
-    "source": "simulator"
-  },
-  {
-    "id": "7d2f43a7-1bb1-4dd0-8c65-56553ce31f25",
-    "timestamp": "2026-05-05T10:17:15.358Z",
-    "user_id": "user-charlie",
-    "user_name": "Charlie Davis",
-    "user_tenant_id": "tenant-a",
-    "resource_tenant_id": "tenant-b",
-    "resource": "user-directory",
-    "action": "DELETE",
-    "required_permission": "read:profile",
-    "result": "DENY",
-    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-a\" but resource is owned by tenant \"tenant-b\"",
-    "escalation_path": null,
-    "details": {
-      "userTenant": "tenant-a",
-      "resourceTenant": "tenant-b"
-    },
-    "source": "simulator"
-  },
-  {
-    "id": "9330aa7c-6565-4184-b759-cf71bd1e762e",
-    "timestamp": "2026-05-05T10:19:27.883Z",
+    "id": "f6a7d0f6-b05d-4ac5-824b-78e5dfcedf64",
+    "timestamp": "2026-05-05T11:17:53.914Z",
     "user_id": "user-alice",
-    "user_name": "Alice Chen",
+    "user_name": "Alicia Chen",
     "user_tenant_id": "tenant-a",
     "resource_tenant_id": "tenant-a",
     "resource": "users-directory",
     "action": "DELETE",
-    "required_permission": "read:profile",
-    "result": "ALLOW",
-    "reason": "Direct permission granted: \"read:profile\" is explicitly assigned to role \"Employee\"",
-    "escalation_path": null,
+    "required_permission": "delete:users",
+    "result": "DENY",
+    "reason": "Indirect privilege escalation detected: role \"Employee\" transitively inherits permission \"delete:users\" via chain: Employee → Manager → Admin",
+    "escalation_path": [
+      "Employee",
+      "Manager",
+      "Admin"
+    ],
     "details": {
       "directRole": "Employee",
+      "inheritedFrom": "Admin"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "fc490620-44a6-4b63-9bb1-50bd3aac06b1",
+    "timestamp": "2026-05-05T11:18:00.954Z",
+    "user_id": "user-charlie",
+    "user_name": "Charlie Davis",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-a",
+    "resource": "reports-db",
+    "action": "GET",
+    "required_permission": "read:reports",
+    "result": "ALLOW",
+    "reason": "Direct permission granted: \"read:reports\" is explicitly assigned to role \"Admin\"",
+    "escalation_path": null,
+    "details": {
+      "directRole": "Admin",
       "method": "direct"
     },
     "source": "simulator"
   },
   {
-    "id": "4191aa94-847d-4287-a51f-263653a148b4",
-    "timestamp": "2026-05-05T10:19:32.130Z",
+    "id": "cbe5ad35-cdd6-4052-99af-cb769987f735",
+    "timestamp": "2026-05-05T11:19:01.200Z",
     "user_id": "user-alice",
-    "user_name": "Alice Chen",
+    "user_name": "Alicia Chen",
     "user_tenant_id": "tenant-a",
     "resource_tenant_id": "tenant-b",
     "resource": "users-directory",
     "action": "DELETE",
-    "required_permission": "read:profile",
+    "required_permission": "delete:users",
     "result": "DENY",
     "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-a\" but resource is owned by tenant \"tenant-b\"",
     "escalation_path": null,
@@ -95,46 +61,27 @@
     "source": "simulator"
   },
   {
-    "id": "8eef322c-2743-4638-874d-65539458c7cd",
-    "timestamp": "2026-05-05T10:20:21.220Z",
+    "id": "6ddaee1d-26a7-4c3e-bd98-6d6afb8368c6",
+    "timestamp": "2026-05-05T11:19:34.222Z",
     "user_id": "user-charlie",
     "user_name": "Charlie Davis",
     "user_tenant_id": "tenant-a",
-    "resource_tenant_id": "tenant-b",
-    "resource": "user-directory",
-    "action": "DELETE",
-    "required_permission": "read:team",
-    "result": "DENY",
-    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-a\" but resource is owned by tenant \"tenant-b\"",
-    "escalation_path": null,
-    "details": {
-      "userTenant": "tenant-a",
-      "resourceTenant": "tenant-b"
-    },
-    "source": "simulator"
-  },
-  {
-    "id": "2cf2ac63-50c6-484a-85b3-c341ee59abcc",
-    "timestamp": "2026-05-05T10:48:02.964Z",
-    "user_id": "user-bob",
-    "user_name": "Bob Martinez",
-    "user_tenant_id": "tenant-b",
     "resource_tenant_id": "tenant-a",
-    "resource": "reports-db",
-    "action": "GET",
-    "required_permission": "read:reports",
-    "result": "DENY",
-    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-b\" but resource is owned by tenant \"tenant-a\"",
+    "resource": "user-002",
+    "action": "DELETE",
+    "required_permission": "delete:users",
+    "result": "ALLOW",
+    "reason": "Sensitive permission \"delete:users\" directly assigned to role \"Admin\" — access granted",
     "escalation_path": null,
     "details": {
-      "userTenant": "tenant-b",
-      "resourceTenant": "tenant-a"
+      "directRole": "Admin",
+      "method": "direct-sensitive"
     },
     "source": "simulator"
   },
   {
-    "id": "ebf1bb53-4df0-41cc-8a78-5abb48a4e886",
-    "timestamp": "2026-05-05T10:48:14.403Z",
+    "id": "80dc636a-489a-4aa9-9126-6a20524e4b6a",
+    "timestamp": "2026-05-05T11:25:36.572Z",
     "user_id": "user-diana",
     "user_name": "Diana Wu",
     "user_tenant_id": "tenant-b",
@@ -151,15 +98,151 @@
     "source": "simulator"
   },
   {
-    "id": "8f9425b6-9cd4-401d-966c-5df4919e2b01",
-    "timestamp": "2026-05-05T10:48:38.364Z",
-    "user_id": "user-bob",
-    "user_name": "Bob Martinez",
+    "id": "663162f1-cd38-40e5-b3b1-d0a4cfb50386",
+    "timestamp": "2026-05-05T11:25:47.996Z",
+    "user_id": "user-charlie",
+    "user_name": "Charlie Davis",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-b",
+    "resource": "billing-portal",
+    "action": "GET",
+    "required_permission": "manage:billing",
+    "result": "DENY",
+    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-a\" but resource is owned by tenant \"tenant-b\"",
+    "escalation_path": null,
+    "details": {
+      "userTenant": "tenant-a",
+      "resourceTenant": "tenant-b"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "bc06b86c-15a8-48bf-82f9-eaa5bd2a91e1",
+    "timestamp": "2026-05-05T11:28:55.583Z",
+    "user_id": "user-diana",
+    "user_name": "Diana Wu",
+    "user_tenant_id": "tenant-b",
+    "resource_tenant_id": "tenant-b",
+    "resource": "billing-portal",
+    "action": "GET",
+    "required_permission": "manage:billing",
+    "result": "DENY",
+    "reason": "Permission \"manage:billing\" is not assigned to role \"Analyst\" or any role in its inheritance chain",
+    "escalation_path": null,
+    "details": {
+      "directRole": "Analyst"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "81a2bd16-ff0c-4de1-a0da-882e67eb075c",
+    "timestamp": "2026-05-05T11:29:42.256Z",
+    "user_id": "user-alice",
+    "user_name": "Alicia Chen",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-b",
+    "resource": "user-directory",
+    "action": "DELETE",
+    "required_permission": "delete:users",
+    "result": "DENY",
+    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-a\" but resource is owned by tenant \"tenant-b\"",
+    "escalation_path": null,
+    "details": {
+      "userTenant": "tenant-a",
+      "resourceTenant": "tenant-b"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "62f24c26-b87e-4405-9765-488acb257da5",
+    "timestamp": "2026-05-05T11:30:22.656Z",
+    "user_id": "user-charlie",
+    "user_name": "Charlie Davis",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-a",
+    "resource": "user-002",
+    "action": "DELETE",
+    "required_permission": "delete:users",
+    "result": "ALLOW",
+    "reason": "Sensitive permission \"delete:users\" directly assigned to role \"Admin\" — access granted",
+    "escalation_path": null,
+    "details": {
+      "directRole": "Admin",
+      "method": "direct-sensitive"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "b13e9c67-f646-4218-89fd-87d2512059d8",
+    "timestamp": "2026-05-05T11:30:44.425Z",
+    "user_id": "user-alice",
+    "user_name": "Alicia Chen",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-a",
+    "resource": "users-directory",
+    "action": "DELETE",
+    "required_permission": "delete:users",
+    "result": "DENY",
+    "reason": "Indirect privilege escalation detected: role \"Employee\" transitively inherits permission \"delete:users\" via chain: Employee → Manager → Admin",
+    "escalation_path": [
+      "Employee",
+      "Manager",
+      "Admin"
+    ],
+    "details": {
+      "directRole": "Employee",
+      "inheritedFrom": "Admin"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "f0859967-274e-4e21-b8b8-eea99ff495d7",
+    "timestamp": "2026-05-05T11:31:15.347Z",
+    "user_id": "user-alice",
+    "user_name": "Alicia Chen",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-b",
+    "resource": "users-directory",
+    "action": "DELETE",
+    "required_permission": "delete:users",
+    "result": "DENY",
+    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-a\" but resource is owned by tenant \"tenant-b\"",
+    "escalation_path": null,
+    "details": {
+      "userTenant": "tenant-a",
+      "resourceTenant": "tenant-b"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "48dbd22e-db6b-4050-b847-6cf317432498",
+    "timestamp": "2026-05-05T11:31:40.438Z",
+    "user_id": "user-charlie",
+    "user_name": "Charlie Davis",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-a",
+    "resource": "users-directory",
+    "action": "DELETE",
+    "required_permission": "export:data",
+    "result": "ALLOW",
+    "reason": "Sensitive permission \"export:data\" directly assigned to role \"Admin\" — access granted",
+    "escalation_path": null,
+    "details": {
+      "directRole": "Admin",
+      "method": "direct-sensitive"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "f28c190e-7943-487e-9c72-1e62aeeb3ebd",
+    "timestamp": "2026-05-05T11:40:19.108Z",
+    "user_id": "user-diana",
+    "user_name": "Diana Wu",
     "user_tenant_id": "tenant-b",
     "resource_tenant_id": "tenant-a",
-    "resource": "reports-db",
-    "action": "GET",
-    "required_permission": "read:reports",
+    "resource": "user-directory",
+    "action": "DELETE",
+    "required_permission": "delete:users",
     "result": "DENY",
     "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-b\" but resource is owned by tenant \"tenant-a\"",
     "escalation_path": null,
@@ -170,21 +253,193 @@
     "source": "simulator"
   },
   {
-    "id": "adcd134d-3253-4cf5-8dbf-c747aaca9ef8",
-    "timestamp": "2026-05-05T10:48:48.204Z",
-    "user_id": "user-bob",
-    "user_name": "Bob Martinez",
+    "id": "37ebdf66-9485-4854-aac4-6be4629f3e12",
+    "timestamp": "2026-05-05T11:51:07.472Z",
+    "user_id": "user-diana",
+    "user_name": "Diana Wu",
     "user_tenant_id": "tenant-b",
     "resource_tenant_id": "tenant-a",
-    "resource": "reports-d",
-    "action": "GET",
-    "required_permission": "read:reports",
+    "resource": "users-directory",
+    "action": "DELETE",
+    "required_permission": "delete:users",
     "result": "DENY",
     "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-b\" but resource is owned by tenant \"tenant-a\"",
     "escalation_path": null,
     "details": {
       "userTenant": "tenant-b",
       "resourceTenant": "tenant-a"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "0ef313ff-0a7a-4d51-a7ab-1715e5c95d29",
+    "timestamp": "2026-05-05T11:51:21.743Z",
+    "user_id": "user-diana",
+    "user_name": "Diana Wu",
+    "user_tenant_id": "tenant-b",
+    "resource_tenant_id": "tenant-a",
+    "resource": "user-002",
+    "action": "DELETE",
+    "required_permission": "delete:users",
+    "result": "DENY",
+    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-b\" but resource is owned by tenant \"tenant-a\"",
+    "escalation_path": null,
+    "details": {
+      "userTenant": "tenant-b",
+      "resourceTenant": "tenant-a"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "f5a7d486-fed7-4232-99ef-ecf7740857d2",
+    "timestamp": "2026-05-05T11:52:56.524Z",
+    "user_id": "user-charlie",
+    "user_name": "Charlie Davis",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-a",
+    "resource": "user-002",
+    "action": "DELETE",
+    "required_permission": "delete:users",
+    "result": "ALLOW",
+    "reason": "Sensitive permission \"delete:users\" directly assigned to role \"Admin\" — access granted",
+    "escalation_path": null,
+    "details": {
+      "directRole": "Admin",
+      "method": "direct-sensitive"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "e6d49ef4-869a-4469-a44f-a30f6e034090",
+    "timestamp": "2026-05-05T12:12:48.537Z",
+    "user_id": "user-evelyn",
+    "user_name": "Evelyn Roy",
+    "user_tenant_id": "tenant-c",
+    "resource_tenant_id": "tenant-c",
+    "resource": "tenant-admin",
+    "action": "PATCH",
+    "required_permission": "manage:tenants",
+    "result": "DENY",
+    "reason": "Indirect privilege escalation detected: role \"Intern\" transitively inherits permission \"manage:tenants\" via chain: Intern → Analyst → Team Lead → Security Lead → Admin",
+    "escalation_path": [
+      "Intern",
+      "Analyst",
+      "Team Lead",
+      "Security Lead",
+      "Admin"
+    ],
+    "details": {
+      "directRole": "Intern",
+      "inheritedFrom": "Admin"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "cf37ff68-c2d5-4f95-bdfe-664eec8f23fa",
+    "timestamp": "2026-05-05T12:13:11.646Z",
+    "user_id": "user-evelyn",
+    "user_name": "Evelyn Roy",
+    "user_tenant_id": "tenant-c",
+    "resource_tenant_id": "tenant-c",
+    "resource": "tenant-admin",
+    "action": "PATCH",
+    "required_permission": "read:team",
+    "result": "DENY",
+    "reason": "Indirect privilege escalation detected: role \"Intern\" transitively inherits permission \"read:team\" via chain: Intern → Analyst → Team Lead",
+    "escalation_path": [
+      "Intern",
+      "Analyst",
+      "Team Lead"
+    ],
+    "details": {
+      "directRole": "Intern",
+      "inheritedFrom": "Team Lead"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "e6577440-bddf-43bd-9060-6ccd12912d23",
+    "timestamp": "2026-05-05T12:26:37.101Z",
+    "user_id": "user-bob",
+    "user_name": "Robert Martinez",
+    "user_tenant_id": "tenant-b",
+    "resource_tenant_id": "tenant-c",
+    "resource": "user-directory",
+    "action": "DELETE",
+    "required_permission": "delete:users",
+    "result": "DENY",
+    "reason": "Cross-tenant access violation: user belongs to tenant \"tenant-b\" but resource is owned by tenant \"tenant-c\"",
+    "escalation_path": null,
+    "details": {
+      "userTenant": "tenant-b",
+      "resourceTenant": "tenant-c"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "5482200a-5800-41e2-a68a-8721a1651d58",
+    "timestamp": "2026-05-05T12:26:49.595Z",
+    "user_id": "user-bob",
+    "user_name": "Robert Martinez",
+    "user_tenant_id": "tenant-b",
+    "resource_tenant_id": "tenant-b",
+    "resource": "user-directory",
+    "action": "DELETE",
+    "required_permission": "manage:billing",
+    "result": "ALLOW",
+    "reason": "Sensitive permission \"manage:billing\" directly assigned to role \"Admin\" — access granted",
+    "escalation_path": null,
+    "details": {
+      "directRole": "Admin",
+      "method": "direct-sensitive"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "5efcdd3e-d15b-4ba8-811c-5a792ce0f04c",
+    "timestamp": "2026-05-05T12:27:14.137Z",
+    "user_id": "user-alice",
+    "user_name": "Alicia Chen",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-a",
+    "resource": "users-directory",
+    "action": "DELETE",
+    "required_permission": "delete:users",
+    "result": "DENY",
+    "reason": "Indirect privilege escalation detected: role \"Employee\" transitively inherits permission \"delete:users\" via chain: Employee → Manager → Admin",
+    "escalation_path": [
+      "Employee",
+      "Manager",
+      "Admin"
+    ],
+    "details": {
+      "directRole": "Employee",
+      "inheritedFrom": "Admin"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "339b0329-128c-4e96-87f1-98de77ba8395",
+    "timestamp": "2026-05-05T12:32:15.726Z",
+    "user_id": "user-evelyn",
+    "user_name": "Evelyn Roy",
+    "user_tenant_id": "tenant-c",
+    "resource_tenant_id": "tenant-c",
+    "resource": "tenant-admin",
+    "action": "PATCH",
+    "required_permission": "manage:tenants",
+    "result": "DENY",
+    "reason": "Indirect privilege escalation detected: role \"Intern\" transitively inherits permission \"manage:tenants\" via chain: Intern → Analyst → Team Lead → Security Lead → Admin",
+    "escalation_path": [
+      "Intern",
+      "Analyst",
+      "Team Lead",
+      "Security Lead",
+      "Admin"
+    ],
+    "details": {
+      "directRole": "Intern",
+      "inheritedFrom": "Admin"
     },
     "source": "simulator"
   }

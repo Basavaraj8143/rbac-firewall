@@ -1,14 +1,38 @@
 [
   {
     "parent_role_id": "role-a-manager",
-    "child_role_id":  "role-a-employee",
-    "tenant_id":      "tenant-a",
-    "description":    "Employee inherits from Manager (escalation path)"
+    "child_role_id": "role-a-employee",
+    "tenant_id": "tenant-a",
+    "description": "Employee inherits from Manager (escalation path)"
   },
   {
     "parent_role_id": "role-a-admin",
-    "child_role_id":  "role-a-manager",
-    "tenant_id":      "tenant-a",
-    "description":    "Manager inherits from Admin (escalation path)"
+    "child_role_id": "role-a-manager",
+    "tenant_id": "tenant-a",
+    "description": "Manager inherits from Admin (escalation path)"
+  },
+  {
+    "parent_role_id": "role-c-analyst",
+    "child_role_id": "role-c-intern",
+    "tenant_id": "tenant-c",
+    "description": "Intern inherits from Analyst"
+  },
+  {
+    "parent_role_id": "role-c-team-lead",
+    "child_role_id": "role-c-analyst",
+    "tenant_id": "tenant-c",
+    "description": "Analyst inherits from Team Lead"
+  },
+  {
+    "parent_role_id": "role-c-security-lead",
+    "child_role_id": "role-c-team-lead",
+    "tenant_id": "tenant-c",
+    "description": "Team Lead inherits from Security Lead"
+  },
+  {
+    "parent_role_id": "role-c-admin",
+    "child_role_id": "role-c-security-lead",
+    "tenant_id": "tenant-c",
+    "description": "Security Lead inherits from Admin"
   }
 ]

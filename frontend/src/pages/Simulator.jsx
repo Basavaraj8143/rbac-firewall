@@ -1,246 +1,470 @@
-import { useState, useEffect } from 'react';
-import { getScenarios, runSimulation, getUsers } from '../api';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { getUsers, runSimulation } from '../api';
+import { useAuth } from '../context/AuthContext';
 import FirewallResult from '../components/FirewallResult';
-import { Zap, Shield } from 'lucide-react';
+import { Shield } from 'lucide-react';
 
 const ALL_PERMISSIONS = [
   'read:reports', 'write:reports', 'read:profile', 'read:team',
-  'delete:users', 'manage:billing', 'export:data', 'read:metrics'
+  'delete:users', 'manage:billing', 'export:data', 'read:metrics',
+  'manage:roles', 'manage:tenants'
 ];
 
 const TENANTS = [
   { id: 'tenant-a', name: 'Acme Corp' },
-  { id: 'tenant-b', name: 'Beta Inc'  },
+  { id: 'tenant-b', name: 'Beta Inc' },
+  { id: 'tenant-c', name: 'Apex Solutions' },
 ];
 
-export default function Simulator() {
-  const [scenarios, setScenarios]   = useState([]);
-  const [users, setUsers]           = useState([]);
-  const [result, setResult]         = useState(null);
-  const [loading, setLoading]       = useState(false);
-  const [activeScenario, setActive] = useState(null);
+const PIPELINE = [
+  { step: '01', label: 'Resolve User', className: 'timeline-pill-thinking', desc: 'Lookup user identity and role assignment' },
+  { step: '02', label: 'Tenant Isolation', className: 'timeline-pill-grep', desc: 'Validate user.tenant_id equals resource.tenant_id' },
+  { step: '03', label: 'Direct Permission', className: 'timeline-pill-read', desc: 'Check role explicit permission set' },
+  { step: '04', label: 'Build Role Graph', className: 'timeline-pill-edit', desc: 'Construct adjacency list from inheritance table' },
+  { step: '05', label: 'DFS Traversal', className: 'timeline-pill-edit', desc: 'Traverse all ancestor roles with cycle protection' },
+  { step: '06', label: 'Escalation Check', className: 'timeline-pill-done', desc: 'Detect inherited sensitive permissions' },
+];
 
-  // Custom form state
-  const [form, setForm] = useState({
-    userId:             '',
-    resourceTenantId:   'tenant-a',
-    requiredPermission: 'delete:users',
-    resource:           'user-directory',
-    action:             'DELETE'
-  });
+const STEP_DELAYS_MS = [650, 760, 680, 900, 960, 820];
+
+const DEFAULT_FORM = {
+  userId: '',
+  resourceTenantId: 'tenant-a',
+  requiredPermission: 'delete:users',
+  resource: 'user-directory',
+  action: 'DELETE',
+};
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function buildStepMessage(index, payload, userName) {
+  switch (index) {
+    case 0:
+      return `Identity resolver: mapping ${userName || payload.userId} to active tenant-role profile.`;
+    case 1:
+      return `Tenant guard: validating ${payload.resourceTenantId} boundary for ${payload.resource}.`;
+    case 2:
+      return `Permission gate: checking direct entitlement for ${payload.requiredPermission}.`;
+    case 3:
+      return 'Graph engine: loading inheritance edges and compiling adjacency map.';
+    case 4:
+      return 'Traversal engine: expanding DFS/BFS path candidates with cycle protection.';
+    case 5:
+      return 'Risk evaluator: scoring escalation risk and generating explainable verdict.';
+    default:
+      return 'Engine step running...';
+  }
+}
+
+export default function Simulator() {
+  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const [users, setUsers] = useState([]);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [showPipeline, setShowPipeline] = useState(false);
+  const [form, setForm] = useState(DEFAULT_FORM);
+  const [activeStepIndex, setActiveStepIndex] = useState(-1);
+  const [completedStepIndex, setCompletedStepIndex] = useState(-1);
+  const [engineMessages, setEngineMessages] = useState([]);
+  const [waitingForEngineVerdict, setWaitingForEngineVerdict] = useState(false);
+  const scenarioUserId = searchParams.get('userId');
+  const isScenarioUserOverride = Boolean(scenarioUserId && scenarioUserId !== user?.id);
 
   useEffect(() => {
-    getScenarios().then(r => setScenarios(r.data.scenarios));
-    getUsers().then(r => setUsers(r.data.users));
+    getUsers()
+      .then((response) => setUsers(response.data.users))
+      .catch(() => setUsers([]));
   }, []);
 
-  const loadScenario = (s) => {
-    setActive(s.id);
-    setResult(null);
+  useEffect(() => {
     setForm({
-      userId:             s.userId,
-      resourceTenantId:   s.resourceTenantId,
-      requiredPermission: s.requiredPermission,
-      resource:           s.resource,
-      action:             s.action
+      userId: scenarioUserId || user?.id || '',
+      resourceTenantId: searchParams.get('resourceTenantId') || user?.tenant_id || DEFAULT_FORM.resourceTenantId,
+      requiredPermission: searchParams.get('requiredPermission') || DEFAULT_FORM.requiredPermission,
+      resource: searchParams.get('resource') || DEFAULT_FORM.resource,
+      action: searchParams.get('action') || DEFAULT_FORM.action,
     });
-  };
+  }, [searchParams, user, scenarioUserId]);
 
   const runCheck = async () => {
-    if (!form.userId) return;
+    if (!form.userId) {
+      return;
+    }
+
+    const payload = { ...form };
+    const selectedUser = users.find((item) => item.id === payload.userId);
+    const selectedName = selectedUser?.name || payload.userId;
+
+    setShowPipeline(true);
     setLoading(true);
     setResult(null);
+    setActiveStepIndex(-1);
+    setCompletedStepIndex(-1);
+    setEngineMessages([
+      `Engine boot: preparing verification stack for ${selectedName}.`
+    ]);
+    setWaitingForEngineVerdict(false);
+
+    const responsePromise = runSimulation(payload)
+      .then((response) => ({ ok: true, data: response.data }))
+      .catch((error) => ({ ok: false, error }));
+
     try {
-      const res = await runSimulation(form);
-      setResult(res.data);
-    } catch (e) {
-      setResult({ decision: 'ERROR', reason: e.message });
+      for (let index = 0; index < PIPELINE.length; index += 1) {
+        setActiveStepIndex(index);
+        setEngineMessages((current) => [
+          ...current,
+          `[${PIPELINE[index].step}] ${buildStepMessage(index, payload, selectedName)}`
+        ]);
+        await sleep(STEP_DELAYS_MS[index]);
+        setCompletedStepIndex(index);
+      }
+
+      setActiveStepIndex(-1);
+      setWaitingForEngineVerdict(true);
+      setEngineMessages((current) => [
+        ...current,
+        'Finalizer: reconciling audit envelope and decision metadata.'
+      ]);
+
+      const response = await responsePromise;
+      setWaitingForEngineVerdict(false);
+
+      if (response.ok) {
+        setResult(response.data);
+        setEngineMessages((current) => [
+          ...current,
+          `Decision emitted: ${response.data.decision}. Rendering explanation payload.`
+        ]);
+      } else {
+        setResult({ decision: 'ERROR', reason: response.error.message });
+        setEngineMessages((current) => [
+          ...current,
+          'Decision failed: unable to complete firewall evaluation.'
+        ]);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const selectedUser = users.find(u => u.id === form.userId);
+  const selectedUser = users.find((item) => item.id === form.userId) || (user?.id === form.userId ? user : null);
+  const selectedScenarioLabel = searchParams.get('scenarioLabel');
 
   return (
     <div>
-      <div className="page-header">
-        <h1 className="page-title" style={{ display: 'flex', alignItems: 'center' }}><Zap size={28} style={{ marginRight: 8, color: 'var(--accent)' }} /> Permission Firewall Simulator</h1>
+      <div className="page-header fade-up">
+        <h1 className="page-title">Permission Firewall Check</h1>
         <p className="page-subtitle">
-          Simulate access requests and observe real-time firewall decisions with DFS/BFS escalation analysis
+          Build a request and run a single firewall decision flow.
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: 24, alignItems: 'start' }}>
+      <section className="sim-grid-single">
+        <div className="sim-col fade-up delay-1">
+          {selectedScenarioLabel ? (
+            <div className="card">
+              <div className="section-label">Loaded Scenario</div>
+              <h2 className="card-title">{selectedScenarioLabel}</h2>
+              <p className="card-subtitle">
+                This form was prefilled from the Scenarios page.
+              </p>
+            </div>
+          ) : null}
 
-        {/* LEFT — Scenarios + Custom Form */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-          {/* Pre-built Scenarios */}
           <div className="card">
             <div className="card-header">
-              <div className="card-title">Pre-Built Scenarios</div>
+              <div>
+                <div className="section-label">Request</div>
+                <h2 className="card-title">Custom Check</h2>
+              </div>
+              <Link to="/simulator/scenarios" className="btn btn-secondary btn-sm">
+                Open Scenarios
+              </Link>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {scenarios.map(s => (
-                <div
-                  key={s.id}
-                  className={`scenario-card ${activeScenario === s.id ? 'active' : ''}`}
-                  onClick={() => loadScenario(s)}
-                >
-                  <div>
-                    <div className="scenario-title">{s.label}</div>
-                    <div className="scenario-desc">{s.description}</div>
-                    <div style={{ marginTop: 6 }}>
-                      <span className={`badge ${s.expectedDecision === 'ALLOW' ? 'badge-allow' : 'badge-deny'}`}>
-                        Expected: {s.expectedDecision}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Custom Check */}
-          <div className="card">
-            <div className="card-header">
-              <div className="card-title">Custom Check</div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className="form-stack">
               <div className="form-group">
-                <label className="form-label">User Identity</label>
-                <select className="form-select" value={form.userId}
-                  onChange={e => { setActive(null); setForm(f => ({ ...f, userId: e.target.value })); }}>
-                  <option value="">— Select user —</option>
-                  {users.map(u => (
-                    <option key={u.id} value={u.id}>
-                      {u.name} ({u.roleName} @ {u.tenantName})
-                    </option>
+                <label className="form-label" htmlFor="sim-user">User Identity</label>
+                <select
+                  id="sim-user"
+                  className="form-select"
+                  value={form.userId}
+                  disabled
+                >
+                  <option value={form.userId}>
+                    {selectedUser
+                      ? `${selectedUser.name} (${selectedUser.roleName} @ ${selectedUser.tenantName})`
+                      : form.userId
+                        ? `${form.userId} (Scenario override)`
+                        : 'No active session'}
+                  </option>
+                </select>
+                {isScenarioUserOverride ? (
+                  <div className="field-note">
+                    Scenario override active: request runs as <strong>{form.userId}</strong> instead of current login.
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="sim-tenant">Resource Tenant</label>
+                <select
+                  id="sim-tenant"
+                  className="form-select"
+                  value={form.resourceTenantId}
+                  onChange={(event) => setForm((current) => ({ ...current, resourceTenantId: event.target.value }))}
+                >
+                  {TENANTS.map((tenant) => (
+                    <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
                   ))}
                 </select>
               </div>
 
               <div className="form-group">
-                <label className="form-label">Resource Tenant</label>
-                <select className="form-select" value={form.resourceTenantId}
-                  onChange={e => setForm(f => ({ ...f, resourceTenantId: e.target.value }))}>
-                  {TENANTS.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                <label className="form-label" htmlFor="sim-permission">Required Permission</label>
+                <select
+                  id="sim-permission"
+                  className="form-select"
+                  value={form.requiredPermission}
+                  onChange={(event) => setForm((current) => ({ ...current, requiredPermission: event.target.value }))}
+                >
+                  {ALL_PERMISSIONS.map((permission) => (
+                    <option key={permission} value={permission}>{permission}</option>
+                  ))}
                 </select>
               </div>
 
               <div className="form-group">
-                <label className="form-label">Required Permission</label>
-                <select className="form-select" value={form.requiredPermission}
-                  onChange={e => setForm(f => ({ ...f, requiredPermission: e.target.value }))}>
-                  {ALL_PERMISSIONS.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Resource</label>
-                <input className="form-input" value={form.resource}
-                  onChange={e => setForm(f => ({ ...f, resource: e.target.value }))} />
+                <label className="form-label" htmlFor="sim-resource">Resource</label>
+                <input
+                  id="sim-resource"
+                  className="form-input"
+                  value={form.resource}
+                  onChange={(event) => setForm((current) => ({ ...current, resource: event.target.value }))}
+                />
               </div>
             </div>
           </div>
         </div>
 
-        {/* RIGHT — Request Preview + Result */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-          {/* Request preview */}
+        <div className="sim-col fade-up delay-2">
           <div className="card">
             <div className="card-header">
-              <div className="card-title">Request Context</div>
-              {selectedUser && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div className="avatar">{selectedUser.avatar}</div>
-                  <div>
-                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>{selectedUser.name}</div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{selectedUser.roleName} · {selectedUser.tenantName}</div>
-                  </div>
+              <div>
+                <div className="section-label">Preview</div>
+                <h2 className="card-title">Request Context</h2>
+              </div>
+              {selectedUser ? (
+                <div className="user-chip">
+                  <span className="avatar">{selectedUser.avatar}</span>
+                  {selectedUser.name}
                 </div>
-              )}
-            </div>
-            <div className="code-block">
-              <div><span style={{ color: 'var(--text-muted)' }}>X-User-ID:            </span>{form.userId || '—'}</div>
-              <div><span style={{ color: 'var(--text-muted)' }}>X-Resource-Tenant-ID: </span>{form.resourceTenantId}</div>
-              <div><span style={{ color: 'var(--text-muted)' }}>X-Required-Permission:</span>{form.requiredPermission}</div>
-              <div><span style={{ color: 'var(--text-muted)' }}>X-Resource:           </span>{form.resource}</div>
+              ) : null}
             </div>
 
-            <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-              <button
-                className="btn btn-primary"
-                style={{ flex: 1 }}
-                onClick={runCheck}
-                disabled={!form.userId || loading}
-              >
-                {loading ? <span className="spinner" /> : <Shield size={18} />}
+            <div className="code-block">
+              <div>X-User-ID: {form.userId || '-'}</div>
+              <div>X-Resource-Tenant-ID: {form.resourceTenantId}</div>
+              <div>X-Required-Permission: {form.requiredPermission}</div>
+              <div>X-Resource: {form.resource}</div>
+            </div>
+
+            <div className="cta-row">
+              <button type="button" className="btn btn-primary" onClick={runCheck} disabled={!form.userId || loading}>
+                {loading ? <span className="spinner" /> : <Shield size={16} />}
                 {loading ? 'Analyzing...' : 'Run Firewall Check'}
               </button>
-              {result && (
-                <button className="btn btn-ghost btn-sm" onClick={() => setResult(null)}>
+
+              {result ? (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setResult(null);
+                    setShowPipeline(false);
+                    setActiveStepIndex(-1);
+                    setCompletedStepIndex(-1);
+                    setEngineMessages([]);
+                    setWaitingForEngineVerdict(false);
+                  }}
+                >
                   Clear
                 </button>
-              )}
+              ) : null}
             </div>
           </div>
 
-          {/* Engine Analysis Pipeline */}
-          <div className="card">
-            <div className="card-title" style={{ marginBottom: 16 }}>Engine Analysis Pipeline</div>
-            <div className="pipeline">
-              {[
-                { step: '01', label: 'Resolve User',       desc: 'Lookup user identity & role assignment' },
-                { step: '02', label: 'Tenant Isolation',   desc: 'Validate user.tenant_id === resource.tenant_id' },
-                { step: '03', label: 'Direct Permission',  desc: 'Check role\'s explicit permission set' },
-                { step: '04', label: 'Build Role Graph',   desc: 'Construct adjacency list from inheritance table' },
-                { step: '05', label: 'DFS Traversal',      desc: 'Traverse all ancestor roles (cycle-safe)' },
-                { step: '06', label: 'Escalation Check',   desc: 'Detect inherited sensitive permissions' },
-              ].map((s, i) => (
-                <div key={i} className="pipeline-step">
-                  <div className="step-num">{s.step}</div>
-                  <div>
-                    <div className="step-label">{s.label}</div>
-                    <div className="step-desc">{s.desc}</div>
+          {showPipeline ? (
+            <div className="card fade-up">
+              <div className="section-label">Engine</div>
+              <h2 className="card-title">Analysis Pipeline</h2>
+              <div className="pipeline">
+                {PIPELINE.map((item, index) => (
+                  <div
+                    key={item.step}
+                    className={`pipeline-step ${
+                      index <= completedStepIndex
+                        ? 'is-complete'
+                        : index === activeStepIndex
+                          ? 'is-active'
+                          : 'is-pending'
+                    }`}
+                  >
+                    <span className={`badge ${item.className}`}>{item.step}</span>
+                    <div>
+                      <div className="pipeline-label">{item.label}</div>
+                      <div className="pipeline-desc">{item.desc}</div>
+                    </div>
+                    <div className="pipeline-state">
+                      {index <= completedStepIndex ? 'Done' : index === activeStepIndex ? 'Checking...' : 'Queued'}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
+                ))}
+              </div>
 
-          {/* Result */}
-          {result && <FirewallResult result={result} />}
+              <div className="engine-feed">
+                <div className="section-label">Engine Feed</div>
+                <div className="engine-feed-list">
+                  {engineMessages.map((message, index) => (
+                    <div key={`${message}-${index}`} className="engine-feed-item">
+                      {message}
+                    </div>
+                  ))}
+                  {waitingForEngineVerdict ? (
+                    <div className="engine-feed-item pending">
+                      Waiting for final response from policy evaluator...
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {result ? <FirewallResult result={result} /> : null}
         </div>
-      </div>
+      </section>
 
       <style>{`
-        .pipeline { display: flex; flex-direction: column; gap: 0; }
+        .sim-grid-single {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+        }
+
+        .sim-col {
+          display: grid;
+          gap: 20px;
+          align-content: start;
+        }
+
+        .form-stack {
+          display: grid;
+          gap: 12px;
+        }
+
+        .field-note {
+          margin-top: 6px;
+          color: var(--muted);
+          font-size: 12px;
+        }
+
+        .pipeline {
+          margin-top: 16px;
+          display: grid;
+          gap: 10px;
+        }
+
         .pipeline-step {
           display: flex;
+          gap: 10px;
           align-items: flex-start;
-          gap: 14px;
-          padding: 10px 0;
-          border-bottom: 1px solid var(--border);
-          position: relative;
+          border-bottom: 1px solid var(--hairline-soft);
+          padding-bottom: 10px;
         }
-        .pipeline-step:last-child { border-bottom: none; }
-        .step-num {
+
+        .pipeline-step:last-child {
+          border-bottom: none;
+          padding-bottom: 0;
+        }
+
+        .pipeline-step.is-active {
+          background: color-mix(in srgb, var(--timeline-read) 16%, transparent 84%);
+          border-radius: var(--radius-md);
+          padding: 8px;
+          margin: 0 -8px;
+          border-bottom-color: transparent;
+        }
+
+        .pipeline-step.is-complete {
+          opacity: 0.88;
+        }
+
+        .pipeline-step.is-pending {
+          opacity: 0.55;
+        }
+
+        .pipeline-label {
+          color: var(--ink);
+          font-size: 14px;
+          font-weight: 500;
+        }
+
+        .pipeline-desc {
+          margin-top: 3px;
+          color: var(--muted);
+          font-size: 13px;
+        }
+
+        .pipeline-state {
+          margin-left: auto;
+          color: var(--muted);
+          font-size: 12px;
+          font-weight: 500;
+        }
+
+        .engine-feed {
+          margin-top: 14px;
+          border-top: 1px solid var(--hairline-soft);
+          padding-top: 12px;
+        }
+
+        .engine-feed-list {
+          margin-top: 8px;
+          border: 1px solid var(--hairline);
+          background: var(--canvas-soft);
+          border-radius: var(--radius-md);
+          padding: 10px;
+          display: grid;
+          gap: 7px;
+          max-height: 210px;
+          overflow: auto;
+        }
+
+        .engine-feed-item {
+          color: var(--ink);
           font-family: var(--font-mono);
-          font-size: 0.7rem;
-          font-weight: 700;
-          color: var(--accent);
-          background: var(--accent-dim);
-          border: 1px solid rgba(59,130,246,0.2);
-          padding: 3px 7px;
-          border-radius: 4px;
-          flex-shrink: 0;
-          margin-top: 2px;
+          font-size: 12px;
+          line-height: 1.45;
         }
-        .step-label { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); }
-        .step-desc  { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+        .engine-feed-item.pending {
+          color: var(--muted);
+        }
+
+        .cta-row {
+          margin-top: 14px;
+          display: flex;
+          gap: 10px;
+        }
+
+        @media (max-width: 1024px) {
+          .sim-grid-single {
+            grid-template-columns: 1fr;
+          }
+        }
       `}</style>
     </div>
   );

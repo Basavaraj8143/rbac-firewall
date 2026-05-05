@@ -33,5 +33,40 @@
     "name": "Admin",
     "level": 3,
     "permissions": ["read:reports", "read:metrics", "write:reports", "delete:users", "manage:billing"]
+  },
+  {
+    "id": "role-c-intern",
+    "tenant_id": "tenant-c",
+    "name": "Intern",
+    "level": 1,
+    "permissions": ["read:profile"]
+  },
+  {
+    "id": "role-c-analyst",
+    "tenant_id": "tenant-c",
+    "name": "Analyst",
+    "level": 2,
+    "permissions": ["read:profile", "read:reports", "read:metrics"]
+  },
+  {
+    "id": "role-c-team-lead",
+    "tenant_id": "tenant-c",
+    "name": "Team Lead",
+    "level": 3,
+    "permissions": ["read:profile", "read:reports", "read:metrics", "write:reports", "read:team"]
+  },
+  {
+    "id": "role-c-security-lead",
+    "tenant_id": "tenant-c",
+    "name": "Security Lead",
+    "level": 4,
+    "permissions": ["read:profile", "read:reports", "read:metrics", "write:reports", "read:team", "manage:roles", "export:data"]
+  },
+  {
+    "id": "role-c-admin",
+    "tenant_id": "tenant-c",
+    "name": "Admin",
+    "level": 5,
+    "permissions": ["read:profile", "read:reports", "read:metrics", "write:reports", "read:team", "manage:roles", "export:data", "delete:users", "manage:billing", "manage:tenants"]
   }
 ]

@@ -1,34 +1,74 @@
 [
-  {
-    "id": "user-alice",
-    "name": "Alice Chen",
-    "email": "alice@acmecorp.io",
-    "tenant_id": "tenant-a",
-    "role_id": "role-a-employee",
-    "avatar": "AC"
-  },
-  {
-    "id": "user-charlie",
-    "name": "Charlie Davis",
-    "email": "charlie@acmecorp.io",
-    "tenant_id": "tenant-a",
-    "role_id": "role-a-admin",
-    "avatar": "CD"
-  },
-  {
-    "id": "user-bob",
-    "name": "Bob Martinez",
-    "email": "bob@betainc.io",
-    "tenant_id": "tenant-b",
-    "role_id": "role-b-admin",
-    "avatar": "BM"
-  },
-  {
-    "id": "user-diana",
-    "name": "Diana Wu",
-    "email": "diana@betainc.io",
-    "tenant_id": "tenant-b",
-    "role_id": "role-b-analyst",
-    "avatar": "DW"
-  }
+    {
+        "id":  "user-alice",
+        "name":  "Alicia Chen",
+        "email":  "alice@acmecorp.io",
+        "tenant_id":  "tenant-a",
+        "role_id":  "role-a-employee",
+        "avatar":  "AC",
+        "password_hash":  "800289fad35ebe8cebf74cebbc15a9867f2e52e60df469e53b611505b3dcd933"
+    },
+    {
+        "id":  "user-charlie",
+        "name":  "Charlie Davis",
+        "email":  "charlie@acmecorp.io",
+        "tenant_id":  "tenant-a",
+        "role_id":  "role-a-admin",
+        "avatar":  "CD",
+        "password_hash":  "800289fad35ebe8cebf74cebbc15a9867f2e52e60df469e53b611505b3dcd933"
+    },
+    {
+        "id":  "user-bob",
+        "name":  "Robert Martinez",
+        "email":  "bob@betainc.io",
+        "tenant_id":  "tenant-b",
+        "role_id":  "role-b-admin",
+        "avatar":  "RM",
+        "password_hash":  "800289fad35ebe8cebf74cebbc15a9867f2e52e60df469e53b611505b3dcd933"
+    },
+    {
+        "id":  "user-diana",
+        "name":  "Diana Wu",
+        "email":  "diana@betainc.io",
+        "tenant_id":  "tenant-b",
+        "role_id":  "role-b-analyst",
+        "avatar":  "DW",
+        "password_hash":  "800289fad35ebe8cebf74cebbc15a9867f2e52e60df469e53b611505b3dcd933"
+    },
+    {
+        "id":  "user-evelyn",
+        "name":  "Evelyn Roy",
+        "email":  "evelyn@apexsolutions.io",
+        "tenant_id":  "tenant-c",
+        "role_id":  "role-c-intern",
+        "avatar":  "ER",
+        "password_hash":  "800289fad35ebe8cebf74cebbc15a9867f2e52e60df469e53b611505b3dcd933"
+    },
+    {
+        "id":  "user-harper",
+        "name":  "Harper Singh",
+        "email":  "harper@apexsolutions.io",
+        "tenant_id":  "tenant-c",
+        "role_id":  "role-c-analyst",
+        "avatar":  "HS",
+        "password_hash":  "800289fad35ebe8cebf74cebbc15a9867f2e52e60df469e53b611505b3dcd933"
+    },
+    {
+        "id":  "user-farhan",
+        "name":  "Farhan Ali",
+        "email":  "farhan@apexsolutions.io",
+        "tenant_id":  "tenant-c",
+        "role_id":  "role-c-team-lead",
+        "avatar":  "FA",
+        "password_hash":  "800289fad35ebe8cebf74cebbc15a9867f2e52e60df469e53b611505b3dcd933"
+    },
+    {
+        "id":  "user-gina",
+        "name":  "Gina Patel",
+        "email":  "gina@apexsolutions.io",
+        "tenant_id":  "tenant-c",
+        "role_id":  "role-c-admin",
+        "avatar":  "GP",
+        "password_hash":  "800289fad35ebe8cebf74cebbc15a9867f2e52e60df469e53b611505b3dcd933"
+    }
 ]
