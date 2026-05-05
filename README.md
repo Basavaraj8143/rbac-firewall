@@ -20,7 +20,7 @@ Permission Firewall intercepts access requests, validates tenant boundaries, tra
 
 - Backend: Node.js + Express
 - Frontend: React + Vite
-- Storage: JSON flat files (prototype-friendly)
+- Storage: JSON flat files (prototype-friendly) and firebase in production.
 - Graph + Detection: Custom DFS/BFS role traversal
 - Visualization: D3.js role graph
 

@@ -24,6 +24,7 @@ export const getAuditLogs  = (page = 1)  => api.get(`/admin/logs?page=${page}&li
 export const getStats      = ()          => api.get('/admin/stats');
 export const getRoleGraph  = (tenantId)  => api.get(`/admin/graph/${tenantId}`);
 export const getAllRoles    = ()          => api.get('/admin/roles');
+export const getBackupSnapshot = ()       => api.get('/admin/backup');
 export const clearLogs     = ()          => api.delete('/admin/logs');
 
 // ── Health ────────────────────────────────────────────────────────────────────

@@ -9,6 +9,7 @@ const navItems = [
   { path: '/simulator/scenarios', label: 'Scenarios' },
   { path: '/dashboard', label: 'Dashboard' },
   { path: '/roles', label: 'Role Graph' },
+  { path: '/backup', label: 'Backup' },
 ];
 
 export default function Navbar() {
