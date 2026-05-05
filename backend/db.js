@@ -12,6 +12,11 @@ const fs   = require('fs');
 const path = require('path');
 
 const DATA_DIR = path.join(__dirname, 'data');
+const memoryStore = new Map();
+
+function clone(data) {
+  return JSON.parse(JSON.stringify(data));
+}
 
 /**
  * Read a JSON data file by name (without extension).
@@ -19,12 +24,16 @@ const DATA_DIR = path.join(__dirname, 'data');
  * @returns {Array|Object}
  */
 function read(collection) {
+  if (memoryStore.has(collection)) {
+    return clone(memoryStore.get(collection));
+  }
+
   const filePath = path.join(DATA_DIR, `${collection}.json`);
   if (!fs.existsSync(filePath)) {
     throw new Error(`Collection not found: ${collection}`);
   }
   const raw = fs.readFileSync(filePath, 'utf-8');
-  return JSON.parse(raw);
+  return clone(JSON.parse(raw));
 }
 
 /**
@@ -34,7 +43,18 @@ function read(collection) {
  */
 function write(collection, data) {
   const filePath = path.join(DATA_DIR, `${collection}.json`);
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+    memoryStore.delete(collection);
+  } catch (error) {
+    const code = error && error.code;
+    // Serverless hosts like Vercel use read-only deployments. Keep runtime-only writes in memory.
+    if (code === 'EROFS' || code === 'EPERM' || code === 'EACCES') {
+      memoryStore.set(collection, clone(data));
+      return;
+    }
+    throw error;
+  }
 }
 
 /**
