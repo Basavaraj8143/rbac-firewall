@@ -23,9 +23,11 @@ const db = require('../db');
  * // Returns: { 'role-a-employee': ['role-a-manager'], 'role-a-manager': ['role-a-admin'] }
  * buildRoleGraph('tenant-a')
  */
-function buildRoleGraph(tenantId) {
-  const inheritanceEdges = db.read('role_inheritance');
-  const roles            = db.read('roles');
+async function buildRoleGraph(tenantId) {
+  const [inheritanceEdges, roles] = await Promise.all([
+    db.read('role_inheritance'),
+    db.read('roles')
+  ]);
 
   // Filter to this tenant's roles only
   const tenantRoleIds = new Set(

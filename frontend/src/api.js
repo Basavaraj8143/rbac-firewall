@@ -26,6 +26,9 @@ export const getRoleGraph  = (tenantId)  => api.get(`/admin/graph/${tenantId}`);
 export const getAllRoles    = ()          => api.get('/admin/roles');
 export const getBackupSnapshot = ()       => api.get('/admin/backup');
 export const clearLogs     = ()          => api.delete('/admin/logs');
+export const createTenant  = (payload)   => api.post('/admin/tenants', payload);
+export const createRole    = (payload)   => api.post('/admin/roles', payload);
+export const createInheritance = (payload) => api.post('/admin/inheritance', payload);
 
 // ── Health ────────────────────────────────────────────────────────────────────
 export const healthCheck   = ()          => api.get('/health');

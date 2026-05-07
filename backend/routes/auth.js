@@ -58,95 +58,113 @@ function buildAuthUser(user, roles, tenants) {
 }
 
 // GET /api/auth/users - list all users (for demo dropdown)
-router.get('/users', (_req, res) => {
-  const users = db.read('users');
-  const roles = db.read('roles');
-  const tenants = db.read('tenants');
+router.get('/users', async (_req, res, next) => {
+  try {
+    const [users, roles, tenants] = await Promise.all([
+      db.read('users'),
+      db.read('roles'),
+      db.read('tenants')
+    ]);
 
-  const enriched = users.map((u) => {
-    const role = roles.find((r) => r.id === u.role_id);
-    const tenant = tenants.find((t) => t.id === u.tenant_id);
-    return {
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      avatar: u.avatar,
-      tenant_id: u.tenant_id,
-      tenantName: tenant?.name,
-      role_id: u.role_id,
-      roleName: role?.name,
-      roleLevel: role?.level
-    };
-  });
+    const enriched = users.map((u) => {
+      const role = roles.find((r) => r.id === u.role_id);
+      const tenant = tenants.find((t) => t.id === u.tenant_id);
+      return {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        avatar: u.avatar,
+        tenant_id: u.tenant_id,
+        tenantName: tenant?.name,
+        role_id: u.role_id,
+        roleName: role?.name,
+        roleLevel: role?.level
+      };
+    });
 
-  res.json({ users: enriched });
+    res.json({ users: enriched });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // POST /api/auth/login - demo login by userId
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res, next) => {
   const { userId } = req.body;
   if (!userId) {
     return res.status(400).json({ error: 'userId required' });
   }
 
-  const users = db.read('users');
-  const roles = db.read('roles');
-  const tenants = db.read('tenants');
+  try {
+    const [users, roles, tenants] = await Promise.all([
+      db.read('users'),
+      db.read('roles'),
+      db.read('tenants')
+    ]);
 
-  const user = users.find((u) => u.id === userId);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
+    const user = users.find((u) => u.id === userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      success: true,
+      mode: 'demo',
+      user: buildAuthUser(user, roles, tenants)
+    });
+  } catch (error) {
+    next(error);
   }
-
-  res.json({
-    success: true,
-    mode: 'demo',
-    user: buildAuthUser(user, roles, tenants)
-  });
 });
 
 // POST /api/auth/login/secure - secure login by email/password
-router.post('/login/secure', (req, res) => {
+router.post('/login/secure', async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ error: 'email and password required' });
   }
 
-  const users = db.read('users');
-  const roles = db.read('roles');
-  const tenants = db.read('tenants');
+  try {
+    const [users, roles, tenants] = await Promise.all([
+      db.read('users'),
+      db.read('roles'),
+      db.read('tenants')
+    ]);
 
-  const user = users.find((u) => String(u.email).toLowerCase() === String(email).toLowerCase());
-  if (!user) {
-    return res.status(401).json({ error: 'Invalid credentials' });
+    const user = users.find((u) => String(u.email).toLowerCase() === String(email).toLowerCase());
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const providedHash = hashPassword(password);
+    if (providedHash !== user.password_hash) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      tenant_id: user.tenant_id,
+      role_id: user.role_id,
+      mode: 'secure',
+      iat: now,
+      exp: now + JWT_EXP_SECONDS
+    };
+
+    const token = signJwt(payload);
+
+    res.json({
+      success: true,
+      mode: 'secure',
+      token,
+      expiresIn: JWT_EXP_SECONDS,
+      user: buildAuthUser(user, roles, tenants)
+    });
+  } catch (error) {
+    next(error);
   }
-
-  const providedHash = hashPassword(password);
-  if (providedHash !== user.password_hash) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  const payload = {
-    sub: user.id,
-    email: user.email,
-    tenant_id: user.tenant_id,
-    role_id: user.role_id,
-    mode: 'secure',
-    iat: now,
-    exp: now + JWT_EXP_SECONDS
-  };
-
-  const token = signJwt(payload);
-
-  res.json({
-    success: true,
-    mode: 'secure',
-    token,
-    expiresIn: JWT_EXP_SECONDS,
-    user: buildAuthUser(user, roles, tenants)
-  });
 });
 
 module.exports = router;

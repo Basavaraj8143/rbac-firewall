@@ -8,6 +8,7 @@ import SimulationScenarios from './pages/SimulationScenarios';
 import Dashboard  from './pages/Dashboard';
 import RoleManager from './pages/RoleManager';
 import BackupData from './pages/BackupData';
+import AdminSetup from './pages/AdminSetup';
 
 function ProtectedLayout({ children }) {
   const { user } = useAuth();
@@ -29,6 +30,7 @@ function AppRoutes() {
       <Route path="/simulator/scenarios" element={<ProtectedLayout><SimulationScenarios /></ProtectedLayout>} />
       <Route path="/dashboard" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
       <Route path="/roles"     element={<ProtectedLayout><RoleManager /></ProtectedLayout>} />
+      <Route path="/admin"     element={<ProtectedLayout><AdminSetup /></ProtectedLayout>} />
       <Route path="/backup"    element={<ProtectedLayout><BackupData /></ProtectedLayout>} />
       <Route path="*"          element={<Navigate to="/welcome" replace />} />
     </Routes>

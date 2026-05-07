@@ -4,9 +4,12 @@
 
 'use strict';
 
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const db = require('./db');
 
 const authRoutes = require('./routes/auth');
 const resourceRoutes = require('./routes/resources');
@@ -24,7 +27,12 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'operational', engine: 'Permission Firewall v1.0', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'operational',
+    engine: 'Permission Firewall v1.0',
+    storage: 'mongodb',
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.use('/api/auth', authRoutes);
@@ -38,9 +46,17 @@ app.use((err, _req, res, _next) => {
 });
 
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Permission Firewall API running on http://localhost:${PORT}`);
-  });
+  db.connect()
+    .then(() => db.ensureIndexes())
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`Permission Firewall API running on http://localhost:${PORT}`);
+      });
+    })
+    .catch((error) => {
+      console.error('[BOOT] Failed to connect to MongoDB:', error.message);
+      process.exit(1);
+    });
 }
 
 module.exports = app;

@@ -20,7 +20,7 @@ Permission Firewall intercepts access requests, validates tenant boundaries, tra
 
 - Backend: Node.js + Express
 - Frontend: React + Vite
-- Storage: JSON flat files (prototype-friendly) and firebase in production.
+- Storage: MongoDB (seeded from local JSON files in `backend/data`)
 - Graph + Detection: Custom DFS/BFS role traversal
 - Visualization: D3.js role graph
 
@@ -122,13 +122,32 @@ Backend auth settings (for secure login):
 
 - `AUTH_PASSWORD_SALT` (default: `fw_demo_salt`)
 - `AUTH_JWT_SECRET` (default fallback exists, but set your own in real usage)
+- `MONGO_URI` (default: `mongodb://127.0.0.1:27017`)
+- `MONGO_DB_NAME` (default: `permission_firewall`)
+- `DB_AUTO_SEED` (default: `true`, set to `false` to disable auto-seed from JSON)
 
 Example PowerShell:
 
 ```powershell
 $env:AUTH_PASSWORD_SALT="your_salt"
 $env:AUTH_JWT_SECRET="your_strong_secret"
+$env:MONGO_URI="mongodb://127.0.0.1:27017"
+$env:MONGO_DB_NAME="permission_firewall"
 npm run dev
+```
+
+## Seed MongoDB from Existing JSON
+
+From `backend/`:
+
+```bash
+npm run seed:mongo
+```
+
+Force reseed (replace existing collection data):
+
+```bash
+npm run seed:mongo -- --force
 ```
 
 ## Auth API
@@ -185,7 +204,7 @@ Required headers for protected resource routes:
 ## Known Limitations
 
 - JWT verification middleware not yet enforced on protected APIs
-- JSON file storage is single-node prototype storage (not production scale)
+- MongoDB must be running and reachable by `MONGO_URI`
 - No password reset or account lockout flow yet
 
 ## Suggested Next Steps

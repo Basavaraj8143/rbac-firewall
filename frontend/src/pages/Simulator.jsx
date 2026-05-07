@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { getUsers, runSimulation } from '../api';
+import { getAllRoles, getUsers, runSimulation } from '../api';
 import { useAuth } from '../context/AuthContext';
 import FirewallResult from '../components/FirewallResult';
 import { Shield } from 'lucide-react';
@@ -11,7 +11,7 @@ const ALL_PERMISSIONS = [
   'manage:roles', 'manage:tenants'
 ];
 
-const TENANTS = [
+const DEFAULT_TENANTS = [
   { id: 'tenant-a', name: 'Acme Corp' },
   { id: 'tenant-b', name: 'Beta Inc' },
   { id: 'tenant-c', name: 'Apex Solutions' },
@@ -61,6 +61,7 @@ export default function Simulator() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [users, setUsers] = useState([]);
+  const [tenants, setTenants] = useState(DEFAULT_TENANTS);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showPipeline, setShowPipeline] = useState(false);
@@ -73,9 +74,16 @@ export default function Simulator() {
   const isScenarioUserOverride = Boolean(scenarioUserId && scenarioUserId !== user?.id);
 
   useEffect(() => {
-    getUsers()
-      .then((response) => setUsers(response.data.users))
-      .catch(() => setUsers([]));
+    Promise.all([getUsers(), getAllRoles()])
+      .then(([usersResponse, rolesResponse]) => {
+        setUsers(usersResponse.data.users || []);
+        const incomingTenants = rolesResponse?.data?.tenants || [];
+        setTenants(incomingTenants.length > 0 ? incomingTenants : DEFAULT_TENANTS);
+      })
+      .catch(() => {
+        setUsers([]);
+        setTenants(DEFAULT_TENANTS);
+      });
   }, []);
 
   useEffect(() => {
@@ -152,6 +160,10 @@ export default function Simulator() {
 
   const selectedUser = users.find((item) => item.id === form.userId) || (user?.id === form.userId ? user : null);
   const selectedScenarioLabel = searchParams.get('scenarioLabel');
+  const tenantOptions = [...tenants];
+  if (form.resourceTenantId && !tenantOptions.find((tenant) => tenant.id === form.resourceTenantId)) {
+    tenantOptions.unshift({ id: form.resourceTenantId, name: form.resourceTenantId });
+  }
 
   return (
     <div>
@@ -217,7 +229,7 @@ export default function Simulator() {
                   value={form.resourceTenantId}
                   onChange={(event) => setForm((current) => ({ ...current, resourceTenantId: event.target.value }))}
                 >
-                  {TENANTS.map((tenant) => (
+                  {tenantOptions.map((tenant) => (
                     <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
                   ))}
                 </select>

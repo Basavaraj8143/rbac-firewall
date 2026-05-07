@@ -502,5 +502,74 @@
       "inheritedFrom": "Admin"
     },
     "source": "simulator"
+  },
+  {
+    "id": "a6807b39-3bad-41a5-865d-9d54a84499f7",
+    "timestamp": "2026-05-05T17:38:44.925Z",
+    "user_id": "user-alice",
+    "user_name": "Alicia Chen",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-a",
+    "resource": "users-directory",
+    "action": "DELETE",
+    "required_permission": "delete:users",
+    "result": "DENY",
+    "reason": "Indirect privilege escalation detected: role \"Employee\" transitively inherits permission \"delete:users\" via chain: Employee → Manager → Admin",
+    "escalation_path": [
+      "Employee",
+      "Manager",
+      "Admin"
+    ],
+    "details": {
+      "directRole": "Employee",
+      "inheritedFrom": "Admin"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "06ae8907-83da-4e49-a607-f27f079bb416",
+    "timestamp": "2026-05-05T17:38:58.986Z",
+    "user_id": "user-alice",
+    "user_name": "Alicia Chen",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-a",
+    "resource": "users-directory",
+    "action": "DELETE",
+    "required_permission": "delete:users",
+    "result": "DENY",
+    "reason": "Indirect privilege escalation detected: role \"Employee\" transitively inherits permission \"delete:users\" via chain: Employee → Manager → Admin",
+    "escalation_path": [
+      "Employee",
+      "Manager",
+      "Admin"
+    ],
+    "details": {
+      "directRole": "Employee",
+      "inheritedFrom": "Admin"
+    },
+    "source": "simulator"
+  },
+  {
+    "id": "64339114-d0e8-46a4-aea2-1aaf4c93d84f",
+    "timestamp": "2026-05-05T17:39:15.538Z",
+    "user_id": "user-alice",
+    "user_name": "Alicia Chen",
+    "user_tenant_id": "tenant-a",
+    "resource_tenant_id": "tenant-a",
+    "resource": "users-directory",
+    "action": "DELETE",
+    "required_permission": "delete:users",
+    "result": "DENY",
+    "reason": "Indirect privilege escalation detected: role \"Employee\" transitively inherits permission \"delete:users\" via chain: Employee → Manager → Admin",
+    "escalation_path": [
+      "Employee",
+      "Manager",
+      "Admin"
+    ],
+    "details": {
+      "directRole": "Employee",
+      "inheritedFrom": "Admin"
+    },
+    "source": "simulator"
   }
 ]

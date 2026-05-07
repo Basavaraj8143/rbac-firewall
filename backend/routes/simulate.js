@@ -17,7 +17,7 @@ const router = express.Router();
  * POST /api/simulate
  * Body: { userId, resourceTenantId, requiredPermission, resource, action }
  */
-router.post('/', (req, res) => {
+router.post('/', async (req, res, next) => {
   const { userId, resourceTenantId, requiredPermission, resource, action } = req.body;
 
   if (!userId || !resourceTenantId || !requiredPermission) {
@@ -26,46 +26,50 @@ router.post('/', (req, res) => {
     });
   }
 
-  const result = evaluate({
-    userId,
-    resourceTenantId,
-    requiredPermission,
-    resource: resource || 'simulated-resource',
-    action: action || 'ACCESS'
-  });
-
-  const users = db.read('users');
-  const user = users.find((u) => u.id === userId);
-
-  const logEntry = {
-    id: uuidv4(),
-    timestamp: new Date().toISOString(),
-    user_id: userId,
-    user_name: user?.name || 'Unknown',
-    user_tenant_id: user?.tenant_id || null,
-    resource_tenant_id: resourceTenantId,
-    resource: resource || 'simulated-resource',
-    action: action || 'ACCESS',
-    required_permission: requiredPermission,
-    result: result.decision,
-    reason: result.reason,
-    escalation_path: result.escalationPath,
-    details: result.details,
-    source: 'simulator'
-  };
-
   try {
-    db.append('audit_log', logEntry);
-  } catch (_error) {}
+    const result = await evaluate({
+      userId,
+      resourceTenantId,
+      requiredPermission,
+      resource: resource || 'simulated-resource',
+      action: action || 'ACCESS'
+    });
 
-  res.json({
-    decision: result.decision,
-    reason: result.reason,
-    escalationPath: result.escalationPath,
-    details: result.details,
-    auditId: logEntry.id,
-    timestamp: logEntry.timestamp
-  });
+    const users = await db.read('users');
+    const user = users.find((u) => u.id === userId);
+
+    const logEntry = {
+      id: uuidv4(),
+      timestamp: new Date().toISOString(),
+      user_id: userId,
+      user_name: user?.name || 'Unknown',
+      user_tenant_id: user?.tenant_id || null,
+      resource_tenant_id: resourceTenantId,
+      resource: resource || 'simulated-resource',
+      action: action || 'ACCESS',
+      required_permission: requiredPermission,
+      result: result.decision,
+      reason: result.reason,
+      escalation_path: result.escalationPath,
+      details: result.details,
+      source: 'simulator'
+    };
+
+    try {
+      await db.append('audit_log', logEntry);
+    } catch (_error) {}
+
+    res.json({
+      decision: result.decision,
+      reason: result.reason,
+      escalationPath: result.escalationPath,
+      details: result.details,
+      auditId: logEntry.id,
+      timestamp: logEntry.timestamp
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // GET /api/simulate/scenarios - pre-built demo scenarios

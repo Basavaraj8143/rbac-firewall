@@ -84,9 +84,11 @@ function dfsTraverse(startRoleId, graph) {
  *   details: Object
  * }}
  */
-function evaluate({ userId, resourceTenantId, requiredPermission, resource, action }) {
-  const users = db.read('users');
-  const roles = db.read('roles');
+async function evaluate({ userId, resourceTenantId, requiredPermission, resource, action }) {
+  const [users, roles] = await Promise.all([
+    db.read('users'),
+    db.read('roles')
+  ]);
 
   // ── 1. Resolve user ────────────────────────────────────────────────────────
   const user = users.find(u => u.id === userId);
@@ -113,7 +115,7 @@ function evaluate({ userId, resourceTenantId, requiredPermission, resource, acti
   const hasDirectPermission = directRole.permissions.includes(requiredPermission);
 
   // ── 4. Build tenant-scoped role graph ──────────────────────────────────────
-  const graph = buildRoleGraph(user.tenant_id);
+  const graph = await buildRoleGraph(user.tenant_id);
 
   // ── 5. DFS traversal to find all inherited roles ───────────────────────────
   const { visitedRoles, allPaths } = dfsTraverse(directRole.id, graph);

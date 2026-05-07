@@ -13,6 +13,7 @@
     "level": 2,
     "permissions": ["read:reports", "read:profile", "write:reports", "read:team"]
   },
+  
   {
     "id": "role-a-admin",
     "tenant_id": "tenant-a",
