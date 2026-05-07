@@ -8,8 +8,8 @@ const fs = require('fs');
 const path = require('path');
 const { MongoClient } = require('mongodb');
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017';
-const MONGO_DB_NAME = process.env.MONGO_DB_NAME || 'permission_firewall';
+const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017';
+const MONGO_DB_NAME = process.env.MONGO_DB_NAME || process.env.MONGODB_DB_NAME || 'permission_firewall';
 const AUTO_SEED = process.env.DB_AUTO_SEED !== 'false';
 
 const COLLECTIONS = {
