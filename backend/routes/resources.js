@@ -16,7 +16,7 @@ router.get('/reports', firewall('read:reports'), (req, res) => {
   res.json({
     resource:   'reports',
     data:       [{ id: 1, title: 'Q1 Revenue Report' }, { id: 2, title: 'Q2 Revenue Report' }],
-    accessedBy: req.headers['x-user-id'],
+    accessedBy: req.auth?.userId || null,
     auditId:    req.auditId
   });
 });

@@ -1,69 +1,145 @@
-Secure login request
+# JWT Flow (Current Implementation)
 
-Frontend calls POST /api/auth/login/secure with email + password.
+## 1. Login Requests
 
-File: Login.jsx, api.js
+Two login paths issue JWT now:
 
+- `POST /api/auth/login` (demo user select)
+- `POST /api/auth/login/secure` (email + password)
 
+Frontend entry points:
 
-Password verification
+- `frontend/src/pages/Login.jsx`
+- `frontend/src/api.js`
 
-Backend hashes incoming password with SHA-256 + salt (AUTH_PASSWORD_SALT or fw_demo_salt).
+Backend route:
 
-Compares hash with password_hash in users.json.
+- `backend/routes/auth.js`
 
-File: auth.js
+## 2. Credential Validation (Secure Login)
 
+For `/api/auth/login/secure`, backend:
 
+1. Reads `email` and `password`
+2. Hashes password with SHA-256 + salt (`AUTH_PASSWORD_SALT`, fallback `fw_demo_salt`)
+3. Compares with stored `password_hash`
 
-JWT creation
+If mismatch, response is `401 Invalid credentials`.
 
-If valid, backend creates JWT payload:
+## 3. JWT Payload and Signing
 
-sub, email, tenant_id, role_id, mode, iat, exp
+On successful login (demo or secure), backend builds payload:
 
+- `sub`
+- `email`
+- `tenant_id`
+- `role_id`
+- `mode`
+- `iat`
+- `exp`
 
+Token details:
 
+- Algorithm: `HS256`
+- Secret: `AUTH_JWT_SECRET` (fallback `replace-this-dev-secret`)
+- Expiry: `8 hours` (`expiresIn`)
 
-Token is signed with HMAC-SHA256 using AUTH_JWT_SECRET (fallback: replace-this-dev-secret).
+Response includes:
 
-Returns { token, expiresIn, user }.
+```json
+{
+  "success": true,
+  "mode": "demo|secure",
+  "token": "<jwt>",
+  "expiresIn": 28800,
+  "user": { "...": "..." }
+}
+```
 
-File: auth.js
-
-
-
-Frontend storage
+## 4. Frontend Session Storage and Transport
 
 Frontend stores:
 
-user in localStorage key fw_user
+- `fw_user` in `localStorage`
+- `fw_auth_meta` with `mode`, `token`, `expiresIn`
 
-auth meta (mode, token, expiresIn) in fw_auth_meta
+Axios request interceptor automatically adds:
 
+- `Authorization: Bearer <token>`
 
+Files:
 
+- `frontend/src/context/AuthContext.jsx`
+- `frontend/src/api.js`
 
-File: AuthContext.jsx
+## 5. JWT Enforcement on Protected APIs
 
+Protected groups now require valid Bearer token:
 
+- `/api/resources/*`
+- `/api/admin/*`
+- `/api/simulate/*`
 
-Important current limitation
+Middleware:
 
-JWT is issued but not enforced yet on protected APIs.
+- `backend/middleware/requireAuth.js`
 
-Routes like /api/resources, /api/admin, /api/simulate are not currently verifying Bearer token.
+Checks:
 
-So right now JWT is mainly for login/session metadata, not full backend authorization.
+1. Bearer token present
+2. JWT signature valid
+3. Token not expired
+4. Required claims present (`sub`, `tenant_id`, `role_id`)
 
+Then attaches:
 
+```js
+req.auth = {
+  userId,
+  email,
+  tenantId,
+  roleId,
+  mode,
+  tokenExp
+};
+```
 
-What to add for full JWT security
+## 6. Firewall Identity Source
 
-Add auth middleware to verify token signature + expiry.
+Permission firewall now uses token identity (`req.auth.userId`) instead of trusting client `x-user-id`.
 
-Attach decoded user to req.user.
+File:
 
-Protect routes with that middleware.
+- `backend/middleware/permissionFirewall.js`
 
-Prefer httpOnly cookie (or at least send Bearer token on each request).
+## 7. Simulator Override Behavior
+
+`/api/simulate` is authenticated, but still supports scenario override:
+
+- Request can send a different `userId` for simulation
+- Actor identity is still taken from JWT (`req.auth.userId`)
+- Audit captures both actor and simulated user
+
+Extra audit fields:
+
+- `actor_user_id`
+- `actor_user_name`
+- `actor_tenant_id`
+- `scenario_override`
+
+## 8. Public vs Protected Routes
+
+Public:
+
+- `/api/health`
+- `/api/auth/*`
+
+Protected:
+
+- `/api/resources/*`
+- `/api/admin/*`
+- `/api/simulate/*`
+
+## 9. Next Hardening Step
+
+JWT auth is implemented. Next recommended step is role-based guard for admin routes (for example, allow only admin roles on `/api/admin/*`).

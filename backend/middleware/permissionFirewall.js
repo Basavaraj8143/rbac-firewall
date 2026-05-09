@@ -10,15 +10,22 @@ const db = require('../db');
 
 function firewall(requiredPermission) {
   return async function permissionFirewallMiddleware(req, res, next) {
-    const userId = req.headers['x-user-id'];
+    const userId = req.auth?.userId;
     const resourceTenantId = req.headers['x-resource-tenant-id'];
     const resource = req.headers['x-resource'] || req.path;
     const action = req.headers['x-action'] || req.method;
 
-    if (!userId || !resourceTenantId) {
+    if (!userId) {
+      return res.status(401).json({
+        status: 'ERROR',
+        reason: 'Missing authenticated identity in request'
+      });
+    }
+
+    if (!resourceTenantId) {
       return res.status(400).json({
         status: 'ERROR',
-        reason: 'Missing required headers: x-user-id and x-resource-tenant-id are mandatory'
+        reason: 'Missing required header: x-resource-tenant-id is mandatory'
       });
     }
 

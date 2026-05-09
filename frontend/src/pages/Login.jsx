@@ -46,7 +46,11 @@ export default function Login() {
     try {
       if (mode === 'demo') {
         const response = await loginAsUser(selected);
-        login(response.data.user, { mode: 'demo' });
+        login(response.data.user, {
+          mode: 'demo',
+          token: response.data.token,
+          expiresIn: response.data.expiresIn
+        });
       } else {
         const response = await loginSecure(secureEmail, securePassword);
         login(response.data.user, {

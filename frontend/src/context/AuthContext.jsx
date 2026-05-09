@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 const AuthContext = createContext(null);
 
@@ -30,6 +30,19 @@ export function AuthProvider({ children }) {
     setAuthMeta(null);
     localStorage.removeItem('fw_auth_meta');
   };
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+    if (authMeta?.token) {
+      return;
+    }
+    setUser(null);
+    setAuthMeta(null);
+    localStorage.removeItem('fw_user');
+    localStorage.removeItem('fw_auth_meta');
+  }, [user, authMeta]);
 
   return (
     <AuthContext.Provider value={{ user, authMeta, login, logout }}>

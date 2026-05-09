@@ -39,6 +39,19 @@ function signJwt(payload) {
   return `${signingInput}.${signature}`;
 }
 
+function buildJwtPayload(user, mode) {
+  const now = Math.floor(Date.now() / 1000);
+  return {
+    sub: user.id,
+    email: user.email,
+    tenant_id: user.tenant_id,
+    role_id: user.role_id,
+    mode,
+    iat: now,
+    exp: now + JWT_EXP_SECONDS
+  };
+}
+
 function buildAuthUser(user, roles, tenants) {
   const role = roles.find((r) => r.id === user.role_id);
   const tenant = tenants.find((t) => t.id === user.tenant_id);
@@ -107,9 +120,13 @@ router.post('/login', async (req, res, next) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    const token = signJwt(buildJwtPayload(user, 'demo'));
+
     res.json({
       success: true,
       mode: 'demo',
+      token,
+      expiresIn: JWT_EXP_SECONDS,
       user: buildAuthUser(user, roles, tenants)
     });
   } catch (error) {
@@ -142,18 +159,7 @@ router.post('/login/secure', async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const now = Math.floor(Date.now() / 1000);
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      tenant_id: user.tenant_id,
-      role_id: user.role_id,
-      mode: 'secure',
-      iat: now,
-      exp: now + JWT_EXP_SECONDS
-    };
-
-    const token = signJwt(payload);
+    const token = signJwt(buildJwtPayload(user, 'secure'));
 
     res.json({
       success: true,

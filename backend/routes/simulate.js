@@ -18,7 +18,9 @@ const router = express.Router();
  * Body: { userId, resourceTenantId, requiredPermission, resource, action }
  */
 router.post('/', async (req, res, next) => {
-  const { userId, resourceTenantId, requiredPermission, resource, action } = req.body;
+  const requestedUserId = req.body?.userId;
+  const userId = requestedUserId || req.auth?.userId;
+  const { resourceTenantId, requiredPermission, resource, action } = req.body;
 
   if (!userId || !resourceTenantId || !requiredPermission) {
     return res.status(400).json({
@@ -37,6 +39,9 @@ router.post('/', async (req, res, next) => {
 
     const users = await db.read('users');
     const user = users.find((u) => u.id === userId);
+    const actorUserId = req.auth?.userId || null;
+    const actorUser = users.find((u) => u.id === actorUserId);
+    const isScenarioOverride = Boolean(actorUserId && userId && actorUserId !== userId);
 
     const logEntry = {
       id: uuidv4(),
@@ -52,7 +57,11 @@ router.post('/', async (req, res, next) => {
       reason: result.reason,
       escalation_path: result.escalationPath,
       details: result.details,
-      source: 'simulator'
+      source: 'simulator',
+      actor_user_id: actorUserId,
+      actor_user_name: actorUser?.name || null,
+      actor_tenant_id: actorUser?.tenant_id || req.auth?.tenantId || null,
+      scenario_override: isScenarioOverride
     };
 
     try {
@@ -64,6 +73,9 @@ router.post('/', async (req, res, next) => {
       reason: result.reason,
       escalationPath: result.escalationPath,
       details: result.details,
+      actorUserId,
+      simulatedUserId: userId,
+      scenarioOverride: isScenarioOverride,
       auditId: logEntry.id,
       timestamp: logEntry.timestamp
     });

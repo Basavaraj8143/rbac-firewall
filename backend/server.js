@@ -15,6 +15,7 @@ const authRoutes = require('./routes/auth');
 const resourceRoutes = require('./routes/resources');
 const adminRoutes = require('./routes/admin');
 const simulateRoutes = require('./routes/simulate');
+const requireAuth = require('./middleware/requireAuth');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -36,9 +37,9 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
-app.use('/api/resources', resourceRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/simulate', simulateRoutes);
+app.use('/api/resources', requireAuth, resourceRoutes);
+app.use('/api/admin', requireAuth, adminRoutes);
+app.use('/api/simulate', requireAuth, simulateRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error('[ERROR]', err.message);
