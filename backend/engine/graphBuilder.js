@@ -12,7 +12,7 @@
 'use strict';
 
 const db = require('../db');
-
+//reqire db
 /**
  * Build a directed adjacency list for role inheritance within a tenant.
  *
